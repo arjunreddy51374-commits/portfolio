@@ -1,0 +1,183 @@
+/* Ribbon Intelligence: scoped to the breast-cancer research dashboard only. */
+body.ribbon-intelligence {
+  color-scheme: light;
+  --ink: #1f2937;
+  --teal: #26a69a;
+  --muted: #6b7280;
+  --line: #f3c8d8;
+  --surface: #ffffff;
+  --canvas: #ffffff;
+  --soft: #fce4ec;
+  --danger: #e57373;
+  background:
+    radial-gradient(ellipse at 84% 0%, rgba(252, 228, 236, .82), transparent 31rem),
+    linear-gradient(180deg, #fff 0%, #fff 58%, #fdf7f9 100%);
+  color: var(--ink);
+}
+
+.ribbon-intelligence .topbar {
+  border-color: #f3d8e2;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 5px 20px rgba(142, 68, 173, .045);
+}
+.ribbon-intelligence .brand { color: var(--ink); }
+.ribbon-intelligence .brand small { color: var(--muted); }
+.ribbon-intelligence .brand-mark { background: #fce4ec; color: #8e44ad; }
+.ribbon-intelligence .topbar nav a { color: #6b7280; }
+.ribbon-intelligence .topbar nav a:hover,
+.ribbon-intelligence .text-link:hover { color: #8e44ad; }
+.ribbon-intelligence .environment,
+.ribbon-intelligence .pill { border-color: #f3c8d8; background: #fff; color: #6b7280; }
+.ribbon-intelligence .environment i,
+.ribbon-intelligence .status-dot { background: #26a69a; box-shadow: 0 0 0 3px #e5f6f3; }
+
+.ribbon-intelligence .intro {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #f8dce6;
+  border-radius: 18px;
+  background: linear-gradient(112deg, #fff 12%, #fff8fb 100%);
+  padding: 30px clamp(20px, 3vw, 42px) 34px;
+  box-shadow: 0 12px 32px rgba(236, 72, 153, .045);
+}
+.ribbon-intelligence .intro > div,
+.ribbon-intelligence .intro > aside { position: relative; z-index: 1; }
+.care-science-watermark {
+  position: absolute;
+  z-index: 0;
+  top: -7%;
+  right: 23%;
+  width: clamp(250px, 36vw, 450px);
+  height: auto;
+  opacity: .052;
+  filter: blur(.22px);
+  pointer-events: none;
+  animation: ribbon-watermark-float 20s ease-in-out infinite alternate;
+}
+.watermark-cells circle { fill: #fce4ec; stroke: #f48fb1; stroke-width: 3; }
+.watermark-dna { fill: none; stroke: #8e44ad; stroke-width: 3; stroke-linecap: round; }
+.watermark-network { fill: none; stroke: #26a69a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.watermark-network circle { fill: #fff; stroke: #26a69a; stroke-width: 3; }
+.watermark-ribbon { fill: rgba(244, 143, 177, .22); stroke: #ec4899; stroke-width: 2.5; stroke-linejoin: round; }
+.ribbon-intelligence .intro h1 span { color: #ec4899; }
+.ribbon-intelligence .intro-copy { color: #6b7280; }
+.ribbon-intelligence .intro-copy strong { color: #8e44ad; font-weight: 700; }
+.research-tagline { margin: 12px 0 0; color: #8e44ad; font-size: .78rem; font-weight: 750; letter-spacing: .035em; }
+.ribbon-intelligence .status-card {
+  border-color: #f3c8d8;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 8px 24px rgba(236, 72, 153, .075);
+}
+.ribbon-intelligence .status-card strong { color: #1f2937; }
+.ribbon-intelligence .status-card small { color: #6b7280; }
+
+.ribbon-intelligence .eyebrow,
+.ribbon-intelligence .text-link { color: #8e44ad; }
+.ribbon-intelligence .section-block,
+.ribbon-intelligence .panel,
+.ribbon-intelligence .metric-card,
+.ribbon-intelligence .feature-group,
+.ribbon-intelligence .image-preview-card {
+  border-color: #f3c8d8;
+  background-color: #fff;
+  color: #1f2937;
+  box-shadow: 0 7px 22px rgba(142, 68, 173, .045);
+}
+.ribbon-intelligence .section-block { background: rgba(255, 255, 255, .97); }
+.ribbon-intelligence .section-heading h2,
+.ribbon-intelligence .panel h2,
+.ribbon-intelligence .about-panel h2,
+.ribbon-intelligence .metric-card strong,
+.ribbon-intelligence .feature-group legend { color: #1f2937; }
+.ribbon-intelligence .section-note,
+.ribbon-intelligence .intro-copy,
+.ribbon-intelligence .metric-card small,
+.ribbon-intelligence .inline-note,
+.ribbon-intelligence .feature-group > p,
+.ribbon-intelligence .help-text,
+.ribbon-intelligence .comparison-label span,
+.ribbon-intelligence .importance-row > span,
+.ribbon-intelligence .info-list dt,
+.ribbon-intelligence .info-list dd,
+.ribbon-intelligence .about-panel > p:not(.eyebrow),
+.ribbon-intelligence .page-footer,
+.ribbon-intelligence .image-empty-state,
+.ribbon-intelligence .image-empty-state strong,
+.ribbon-intelligence .image-file-details,
+.ribbon-intelligence .upload-box small { color: #6b7280; }
+.ribbon-intelligence .metric-card {
+  background: #fff;
+  border-color: #f4bdd2;
+  box-shadow: 0 5px 16px rgba(236, 72, 153, .055);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.ribbon-intelligence .metric-card:hover,
+.ribbon-intelligence .panel:hover {
+  box-shadow: 0 0 0 1px rgba(236, 72, 153, .12), 0 12px 26px rgba(142, 68, 173, .09);
+}
+.ribbon-intelligence .metric-card strong { color: #8e44ad; }
+.ribbon-intelligence .metric-label { color: #6b7280; }
+.ribbon-intelligence .metric-label span { color: #8e44ad; }
+.ribbon-intelligence .button-primary { background: #ec4899; color: #fff; }
+.ribbon-intelligence .button-primary:hover { background: #d93686; }
+.ribbon-intelligence .button-secondary { border-color: #e5e7eb; background: #fff; color: #1f2937; }
+.ribbon-intelligence .button-secondary:hover { border-color: #f48fb1; background: #fff7fa; }
+.ribbon-intelligence .button:focus-visible,
+.ribbon-intelligence input:focus-visible,
+.ribbon-intelligence a:focus-visible { outline-color: #ec4899; }
+
+.ribbon-intelligence .input-grid label,
+.ribbon-intelligence .review-label { color: #4b5563; }
+.ribbon-intelligence .input-grid input,
+.ribbon-intelligence .image-review-form select,
+.ribbon-intelligence .image-review-form textarea {
+  border-color: #e5cbd5;
+  background: #fff;
+  color: #1f2937;
+}
+.ribbon-intelligence .input-grid input:focus,
+.ribbon-intelligence .image-review-form select:focus,
+.ribbon-intelligence .image-review-form textarea:focus { border-color: #ec4899; }
+.ribbon-intelligence .input-grid input::placeholder,
+.ribbon-intelligence .image-review-form textarea::placeholder { color: #9ca3af; }
+.ribbon-intelligence .input-grid input[aria-invalid="true"] { border-color: #e57373; background: #fffafa; }
+.ribbon-intelligence .field-error { color: #d65f67; }
+.ribbon-intelligence .upload-box { border-color: #f0a8c2; background: #fff7fa; color: #1f2937; }
+.ribbon-intelligence .upload-box:hover { border-color: #ec4899; background: #fce4ec; }
+.ribbon-intelligence .upload-icon,
+.ribbon-intelligence .image-empty-state > span { color: #8e44ad; }
+.ribbon-intelligence .image-preview-card { background: #fff; }
+.ribbon-intelligence .matrix th,
+.ribbon-intelligence .matrix td,
+.ribbon-intelligence .info-list div { border-color: #e5e7eb; }
+.ribbon-intelligence .matrix thead th { background: #fce4ec; color: #6b7280; }
+.ribbon-intelligence .matrix tbody th { background: #fff7fa; color: #1f2937; }
+.ribbon-intelligence .matrix .correct { background: #e5f6f3; color: #167c73; }
+.ribbon-intelligence .matrix .error-cell { background: #fff0f0; color: #c5535c; }
+.ribbon-intelligence .bar-track { background: #f3e8f6; }
+.ribbon-intelligence .bar-track span { background: linear-gradient(90deg, #8e44ad, #ec4899); }
+.ribbon-intelligence .about-panel .data-note { background: #fce4ec; }
+.ribbon-intelligence .disclaimer { border-color: #f48fb1; background: #fff6f8; color: #6b4b57; }
+.ribbon-intelligence .unavailable-pill { border-color: #f3c8d8; background: #fff6f8; color: #9b5366; }
+.ribbon-intelligence .available-pill { border-color: #a9dfd8; background: #e5f6f3; color: #167c73; }
+.ribbon-intelligence .result-panel { border-color: #a9dfd8; background: #effaf8; }
+.ribbon-intelligence .result-panel p { color: #4b5563; }
+.ribbon-intelligence .result-panel .result-warning { color: #9b5366; }
+.ribbon-intelligence .page-footer { color: #6b7280; }
+
+@keyframes ribbon-watermark-float {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-6px, 5px, 0); }
+}
+@media (max-width: 800px) {
+  .care-science-watermark { top: 9%; right: -4%; width: min(52vw, 350px); opacity: .04; }
+}
+@media (max-width: 520px) {
+  .ribbon-intelligence .intro { padding: 22px 18px 26px; }
+  .care-science-watermark { top: 8%; right: -15%; width: 70vw; opacity: .035; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .care-science-watermark { animation: none; }
+  .ribbon-intelligence .metric-card { transition: none; }
+}

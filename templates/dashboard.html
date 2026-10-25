@@ -6,8 +6,9 @@
   <meta name="description" content="Research and education dashboard for a Wisconsin breast-cancer dataset classification project.">
   <title>Research Dashboard · Breast Cancer Classification</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-ribbon.css') }}">
 </head>
-<body>
+<body class="ribbon-intelligence">
   <a class="skip-link" href="#main">Skip to dashboard</a>
   <header class="topbar">
     <a class="brand" href="/" aria-label="Return to portfolio"><span class="brand-mark">BC</span><span>Research workspace<small>ML classification study</small></span></a>
@@ -19,7 +20,13 @@
 
   <main id="main" class="page-shell" data-image-model-ready="{{ 'true' if image_model_ready else 'false' }}">
     <section class="intro" id="overview">
-      <div><p class="eyebrow">RESEARCH / ANALYTICS</p><h1>Breast Cancer<br><span>Classification Study</span></h1><p class="intro-copy">A transparent machine-learning demonstration using 30 digitized cell-nuclei measurements from the Wisconsin Diagnostic Breast Cancer dataset. It does not analyze medical images.</p></div>
+      <svg class="care-science-watermark" viewBox="0 0 480 360" aria-hidden="true" focusable="false">
+        <g class="watermark-cells"><circle cx="352" cy="84" r="39"/><circle cx="352" cy="84" r="22"/><circle cx="96" cy="266" r="34"/><circle cx="96" cy="266" r="18"/><circle cx="407" cy="273" r="24"/></g>
+        <g class="watermark-dna"><path d="M234 27C370 66 166 109 304 151S443 235 289 326"/><path d="M352 27C216 66 420 109 282 151S143 235 297 326"/><path d="M260 42h67M226 68h129M206 96h151M225 124h114M256 151h56M226 178h108M190 207h149M187 236h127M220 266h88M258 294h53"/></g>
+        <g class="watermark-network"><path d="M65 190 126 215 175 187 214 224M126 215l-22 60M175 187l19-55M352 124l48 34 33-44M352 124l-48 27M400 158l-18 53 35 62"/><circle cx="65" cy="190" r="6"/><circle cx="126" cy="215" r="7"/><circle cx="175" cy="187" r="6"/><circle cx="214" cy="224" r="5"/><circle cx="104" cy="275" r="5"/><circle cx="194" cy="132" r="5"/><circle cx="352" cy="124" r="6"/><circle cx="400" cy="158" r="7"/><circle cx="433" cy="114" r="5"/><circle cx="304" cy="151" r="5"/><circle cx="382" cy="211" r="5"/><circle cx="417" cy="273" r="5"/></g>
+        <g class="watermark-ribbon"><path d="M87 42c-27-17-60 3-55 33 2 15 15 28 26 41l85 101 26-22L83 111c-8-10-17-19-15-28 2-12 15-17 25-8l87 103 26-22-86-103C109 58 99 48 87 42Z"/><path d="m77 133 84 102c12 15 27 17 42 4l-20-24c-4 4-9 3-13-2l-69-84Z"/></g>
+      </svg>
+      <div><p class="eyebrow">RESEARCH / ANALYTICS</p><h1>Early Detection<br><span>Through Intelligence</span></h1><p class="intro-copy"><strong>Machine Learning for Breast Cancer Analysis</strong><br>A transparent research demonstration using 30 digitized cell-nuclei measurements from the Wisconsin Diagnostic Breast Cancer dataset. It does not analyze medical images and is not for screening or patient care.</p><p class="research-tagline">Transparent. Explainable. Research-only.</p></div>
       <aside class="status-card"><span class="status-dot"></span><div><strong>Model ready</strong><small>{{ model_name }} · {{ model_version }}</small></div><a href="#assessment" class="button button-primary">Start assessment <span aria-hidden="true">→</span></a></aside>
     </section>
 
