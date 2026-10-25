@@ -13,6 +13,7 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 from finance.calculations import FinancialInputError, analyze_financials
 from healthcare.metrics import HealthMetricInputError, analyze_health_kpis
+from fip.routes import create_blueprint as create_fip_blueprint
 from ml.model_service import (
     MODEL_NAME,
     MODEL_VERSION,
@@ -31,7 +32,11 @@ MAX_IMAGE_PIXELS = 25_000_000
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "tif", "tiff", "webp"}
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_IMAGE_CONTENT_LENGTH
+app.config["FIP_ADMIN_TOKEN"] = os.environ.get("FIP_ADMIN_TOKEN")
+app.config["FIP_REVIEWER_TOKEN"] = os.environ.get("FIP_REVIEWER_TOKEN")
 Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+FIP_DB_PATH = Path(os.environ.get("FIP_DATABASE", str(BASE_DIR / "instance" / "fip.sqlite3"))).expanduser()
+app.register_blueprint(create_fip_blueprint(FIP_DB_PATH))
 
 
 def read_data(name: str):

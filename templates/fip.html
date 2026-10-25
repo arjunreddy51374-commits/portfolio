@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An evidence-led financial intelligence prototype for entity, source, observation, review, and publication workflows.">
+  <title>FIP · Evidence-based Financial Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-audit.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to FIP workspace</a>
+  <header class="topbar">
+    <a class="brand" href="/fip"><span class="brand-mark">F</span><span>FIP<small>FINANCIAL INTELLIGENCE PLATFORM</small></span></a>
+    <nav aria-label="Main navigation"><a aria-current="page" href="/fip">Platform</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
+  </header>
+  <main id="main" class="shell">
+    <section class="hero">
+      <div><p class="eyebrow">RELEASE 1 · LOCAL PROTOTYPE</p><h1>Financial facts,<br><em>with evidence attached.</em></h1>
+        <p class="lede">Register a source and entity, capture a reported observation, validate it, and publish only after review. Corporate and government calculations keep their inputs and formula versions.</p>
+        <div class="chips"><span>Decimal values</span><span>Review-gated publishing</span><span>SQLite lineage</span></div>
+      </div>
+      <aside class="readiness"><span class="readiness-dot"></span><div><strong>Prototype · manual evidence entry</strong><p>No source is fetched or verified automatically. Production readiness is not claimed.</p></div></aside>
+    </section>
+
+    <section class="stat-grid" aria-label="Platform record counts">
+      <article class="stat-card"><span>Entities</span><strong id="count-entities">—</strong></article>
+      <article class="stat-card"><span>Sources</span><strong id="count-sources">—</strong></article>
+      <article class="stat-card"><span>Observations</span><strong id="count-observations">—</strong></article>
+      <article class="stat-card"><span>Published facts</span><strong id="count-published">—</strong></article>
+    </section>
+
+    <section class="section-block public-block">
+      <div class="section-heading"><div><p class="eyebrow">01 / APPROVED DATASET</p><h2>Published financial facts</h2></div><div class="button-group"><button id="prepare-release" class="button secondary" type="button">Prepare release snapshot</button><a id="excel-export" class="button quiet" href="/api/fip/delivery/excel.xlsx">Excel workbook</a><a id="csv-export" class="button quiet" href="/api/fip/delivery/excel.csv">CSV</a><a id="powerbi-export" class="button quiet" href="/api/fip/delivery/powerbi">Power BI JSON</a><button id="refresh-public" class="button quiet" type="button">Refresh</button></div></div>
+      <div class="release-history"><label for="release-select">Approved release history</label><select id="release-select"><option value="">Latest approved release</option></select><button id="open-release" class="button quiet" type="button">Open selected</button></div>
+      <p id="release-summary" class="release-summary">No approved release snapshot yet. Individually published records remain outside the public dataset until a release is approved.</p>
+      <p class="section-note">Only verified entities, approved public-display sources, and observations that passed review appear here.</p>
+      <div class="table-wrap"><table><thead><tr><th>Entity</th><th>Metric</th><th>Reported value</th><th>Period / basis</th><th>Evidence</th></tr></thead><tbody id="public-observations"><tr><td colspan="5" class="empty-row">No approved observations have been published yet.</td></tr></tbody></table></div>
+      <div id="public-calculations" class="calculation-feed"></div>
+    </section>
+
+    <section class="section-block staff-block">
+      <div class="section-heading"><div><p class="eyebrow">02 / CONTROLLED WORKSPACE</p><h2>Capture, review, calculate</h2></div><span class="secure-label">Staff tokens stay in this tab only</span></div>
+      <p class="section-note">The admin token registers records and starts calculations. The reviewer token verifies identity, approves sources, validates observations, and publishes. Set both tokens on the server before use.</p>
+      <div class="token-row">
+        <label>Admin token<input id="admin-token" type="password" autocomplete="off" placeholder="FIP_ADMIN_TOKEN"></label>
+        <label>Reviewer token<input id="reviewer-token" type="password" autocomplete="off" placeholder="FIP_REVIEWER_TOKEN"></label>
+        <button id="load-workspace" class="button secondary" type="button">Load staff workspace</button>
+      </div>
+      <p id="notice" class="notice" role="status" aria-live="polite">Configure tokens to begin. This page does not store them after you close it.</p>
+
+      <div class="work-grid">
+        <form id="entity-form" class="form-card">
+          <p class="eyebrow">02A / IDENTITY</p><h3>Register an entity</h3>
+          <label>Canonical name<input name="canonical_name" required maxlength="300" placeholder="Entity display name"></label>
+          <div class="input-pair"><label>Entity type<select name="entity_type"><option value="company">Company</option><option value="government">Government</option><option value="public_enterprise">Public enterprise</option><option value="department">Department</option><option value="other">Other</option></select></label><label>Jurisdiction code<input name="jurisdiction_code" required placeholder="IN or IN-TN"></label></div>
+          <label>Legal name <span>(optional)</span><input name="legal_name" maxlength="300"></label>
+          <label>Official external identifier <span>(optional)</span><input name="external_id" maxlength="100" placeholder="Registry ID / LEI"></label>
+          <button class="button primary" type="submit">Create identity record</button>
+        </form>
+
+        <form id="source-form" class="form-card">
+          <p class="eyebrow">02B / SOURCE GOVERNANCE</p><h3>Register a public source</h3>
+          <label>Document or dataset title<input name="title" required maxlength="300"></label>
+          <div class="input-pair"><label>Publisher<input name="publisher" required maxlength="300"></label><label>Category<select name="category"><option value="corporate_filing">Corporate filing</option><option value="government_report">Government report</option><option value="official_dataset">Official dataset</option><option value="registry">Entity registry</option><option value="other">Other</option></select></label></div>
+          <label>Original HTTPS URL<input name="url" type="url" placeholder="https://" required></label>
+          <div class="input-pair"><label>Jurisdiction<input name="jurisdiction_code" required placeholder="IN or IN-TN"></label><label>Publication date<input name="publication_date" type="date"></label></div>
+          <div class="input-pair"><label>Retrieval method<input name="retrieval_method" required placeholder="Manual download / API"></label><label>Expected update frequency<input name="expected_frequency" required placeholder="Annual / quarterly"></label></div>
+          <label>Source owner<input name="owner" required maxlength="200" placeholder="Responsible person or team"></label>
+          <div class="input-pair"><label>Access requirements<input name="access_requirements" required maxlength="500" placeholder="Public, account, key, or other condition"></label><label>Technical limits<input name="technical_limits" required maxlength="500" placeholder="Rate limits, file size, or known restrictions"></label></div>
+          <label>Licence / terms<input name="license_name" required placeholder="Name the licence or terms reviewed"></label>
+          <div class="input-pair"><label>Permitted use<select name="permitted_use"><option value="public_display">Public display</option><option value="link_only">Link only</option><option value="internal_only">Internal only</option></select></label><label>Retention rule<input name="retention_rule" required placeholder="Retention or deletion condition"></label></div>
+          <label>Failure handling policy<input name="failure_policy" required maxlength="500" placeholder="Retry, escalation, or stale-data handling rule"></label>
+          <button class="button primary" type="submit">Register source for review</button>
+        </form>
+
+        <form id="fx-form" class="form-card">
+          <p class="eyebrow">02C / FX GOVERNANCE</p><h3>Register an FX rate</h3>
+          <div class="input-pair"><label>Source currency<input name="source_currency" required maxlength="3" placeholder="USD"></label><label>Target currency<input name="target_currency" required maxlength="3" placeholder="INR"></label></div>
+          <label>Target currency units per one source currency unit<input name="rate_decimal" required inputmode="decimal" placeholder="Use decimal notation"></label>
+          <div class="input-pair"><label>Rate period ID<input name="period_id" required placeholder="FY2025 / 2025-Q1"></label><label>Conversion convention<select name="conversion_convention"><option value="period_average">Period average</option><option value="period_end">Period end</option><option value="transaction_date">Transaction date</option><option value="budget_rate">Budget rate</option></select></label></div>
+          <label>Approved source<select name="source_id" id="fx-source" required><option value="">Load staff workspace first</option></select></label>
+          <button class="button primary" type="submit">Register FX rate for review</button>
+          <p class="small-note">FX rates are evidence records; source amount and currency remain preserved on each converted observation.</p>
+        </form>
+
+        <form id="alias-form" class="form-card">
+          <p class="eyebrow">02D / ENTITY ONTOLOGY</p><h3>Add a sourced entity alias</h3>
+          <label>Entity<select name="entity_id" id="alias-entity" required><option value="">Load staff workspace first</option></select></label>
+          <div class="input-pair"><label>Alias<input name="alias" required maxlength="300"></label><label>Alias type<select name="alias_type"><option value="legal_name">Legal name</option><option value="trading_name">Trading name</option><option value="previous_name">Previous name</option><option value="abbreviation">Abbreviation</option><option value="registry_name">Registry name</option></select></label></div>
+          <label>Evidence source<select name="source_id" id="alias-source" required><option value="">Load staff workspace first</option></select></label>
+          <div class="input-pair"><label>Valid from<input name="valid_from" type="date"></label><label>Valid to<input name="valid_to" type="date"></label></div>
+          <button class="button primary" type="submit">Propose alias</button>
+        </form>
+
+        <form id="relationship-form" class="form-card">
+          <p class="eyebrow">02E / ENTITY RELATIONSHIPS</p><h3>Record a relationship</h3>
+          <div class="input-pair"><label>From entity<select name="from_entity_id" id="relationship-from" required></select></label><label>To entity<select name="to_entity_id" id="relationship-to" required></select></label></div>
+          <label>Relationship type<select name="relationship_type"><option value="parent_subsidiary">Parent / subsidiary</option><option value="ownership">Ownership</option><option value="control">Control</option><option value="government_hierarchy">Government hierarchy</option><option value="funding">Funding</option><option value="successor">Successor</option></select></label>
+          <label>Evidence source<select name="source_id" id="relationship-source" required></select></label>
+          <div class="input-pair"><label>Valid from<input name="valid_from" type="date"></label><label>Valid to<input name="valid_to" type="date"></label></div>
+          <button class="button primary" type="submit">Propose relationship</button>
+        </form>
+
+        <form id="mapping-form" class="form-card wide-card">
+          <p class="eyebrow">02F / FINANCIAL ONTOLOGY</p><h3>Propose a source-label mapping</h3>
+          <div class="input-pair"><label>Domain<select id="mapping-domain" name="domain"><option value="corporate">Corporate finance</option><option value="government">Government finance</option></select></label><label>Canonical metric<select id="mapping-metric" name="metric_id"></select></label></div>
+          <div class="input-pair"><label>Reported source label<input name="reported_label" required></label><label>Framework<select name="framework_id" id="mapping-framework"></select></label></div>
+          <div class="input-pair"><label>Framework version<input name="framework_version" required placeholder="Edition / update year"></label><label>Jurisdiction code<input name="jurisdiction_code" required placeholder="IN or IN-TN"></label></div>
+          <div class="input-pair"><label>Valid from<input name="valid_from" type="date"></label><label>Valid to<input name="valid_to" type="date"></label></div>
+          <label>Source evidence<select name="source_id" id="mapping-source" required></select></label>
+          <label>Definition and comparability notes<textarea name="definition_notes" required maxlength="1000" rows="3" placeholder="Explain why this source label maps to the canonical metric and any limitations."></textarea></label>
+          <button class="button primary" type="submit">Propose mapping for review</button>
+        </form>
+
+        <form id="observation-form" class="form-card wide-card">
+          <p class="eyebrow">02G / EVIDENCE & OBSERVATIONS</p><h3>Capture a reported figure</h3>
+          <div class="input-pair"><label>Domain<select id="observation-domain" name="domain"><option value="corporate">Corporate finance</option><option value="government">Government finance</option></select></label><label>Metric<select id="observation-metric" name="metric_id"></select></label></div>
+          <div class="input-pair"><label>Entity<select name="entity_id" id="observation-entity" required><option value="">Load staff workspace first</option></select></label><label>Source<select name="source_id" id="observation-source" required><option value="">Load staff workspace first</option></select></label></div>
+          <label>Correction or restatement of <span>(optional; creates a new version and preserves the earlier record)</span><select name="supersedes_id" id="observation-supersedes"><option value="">New observation</option></select></label>
+          <div class="input-pair"><label>Reported label<input name="reported_label" required placeholder="Label exactly as shown in source"></label><label>Reported value<input name="value" required inputmode="decimal" placeholder="Use decimal notation"></label></div>
+          <div class="input-pair"><label>Currency<input name="currency" required value="INR" maxlength="3"></label><label>Source unit<select name="unit" id="observation-unit"></select></label></div>
+          <label>Approved FX rate <span>(optional; rate period and source currency must match)</span><select name="fx_rate_id" id="observation-fx"><option value="">No currency conversion</option></select></label>
+          <div class="input-pair"><label>Period ID<input name="period_id" required placeholder="FY2025 / 2025-Q1"></label><label>Period type<select name="period_type" id="observation-period-type"></select></label></div>
+          <div class="input-pair"><label>Period start<input name="period_start" type="date" required></label><label>Period end<input name="period_end" type="date" required></label></div>
+          <label>Accounting / reporting basis<input name="reporting_basis" required placeholder="e.g. Ind AS consolidated, accrual basis"></label>
+          <div class="input-pair"><label>Framework<select name="framework_id" id="observation-framework" required></select></label><label>Framework version<input name="framework_version" required placeholder="Edition / update year"></label></div>
+          <label>Source freshness<select name="freshness_status" required><option value="UNKNOWN">Unknown</option><option value="CURRENT">Current — reviewed</option><option value="STALE">Stale</option></select></label>
+          <div id="government-fields" class="input-pair" hidden><label>Fiscal institutional scope<input name="fiscal_scope" placeholder="e.g. General government, central government"></label><label>Budget stage<input name="budget_stage" placeholder="Actual / revised estimate / budget estimate"></label></div>
+          <label>Evidence location<input name="evidence_reference" required maxlength="300" placeholder="Page, table, API field or record location"></label>
+          <button class="button primary" type="submit">Save as ingested observation</button>
+        </form>
+
+        <form id="calculation-form" class="form-card calc-card">
+          <p class="eyebrow">02H / CANONICAL CALCULATION</p><h3>Run a governed model</h3>
+          <label>Domain<select name="domain"><option value="corporate">Corporate finance</option><option value="government">Government finance</option></select></label>
+          <label>Verified entity<select name="entity_id" id="calculation-entity" required><option value="">Load staff workspace first</option></select></label>
+          <div class="input-pair"><label>Current period<input name="period_id" required placeholder="FY2025"></label><label>Prior period <span>(for revenue, receipts, expenditure and debt trends)</span><input name="prior_period_id" placeholder="FY2024"></label></div>
+          <button class="button primary" type="submit">Calculate from published facts</button>
+          <button id="run-reconciliation" class="button secondary" type="button">Run statement reconciliations</button>
+          <pre id="reconciliation-output" class="reconciliation-output" hidden></pre>
+          <p class="small-note">Runs remain review-required until a reviewer publishes them. Government net budget position is explicitly not an official deficit. CAGR, ROIC, working-capital days, debt/GDP and budget execution await approved inputs and definitions.</p>
+        </form>
+      </div>
+
+      <div class="queue-heading"><div><p class="eyebrow">03 / LIFECYCLE QUEUE</p><h3>Review records</h3></div><span id="workspace-role" class="secure-label">Staff view locked</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Record</th><th>Subject</th><th>Evidence / context</th><th>Status</th><th>Next action</th></tr></thead><tbody id="review-queue"><tr><td colspan="5" class="empty-row">Load the staff workspace to see records and available review actions.</td></tr></tbody></table></div>
+      <details class="audit-details"><summary>Recent audit activity</summary><div id="audit-feed" class="audit-feed"><p>Load the staff workspace to view audit events.</p></div></details>
+    </section>
+
+    <section class="section-block governance-block">
+      <p class="eyebrow">04 / RELEASE READINESS</p><h2>Evidence-based production gates</h2>
+      <p id="readiness-summary" class="release-summary">Loading release readiness register…</p>
+      <p class="section-note">Reviewer updates require test or review evidence. Data publication releases can be approved while production gates remain pending; production readiness is tracked separately.</p>
+      <details><summary>Release gates</summary><div id="release-gates" class="register-list"></div></details>
+      <details><summary>Non-functional requirements</summary><div id="nfr-register" class="register-list"></div></details>
+    </section>
+
+    <section class="section-block methodology-block"><p class="eyebrow">IMPLEMENTATION BOUNDARY</p><h2>What this build covers</h2>
+      <div class="boundary-grid"><p><strong>Implemented:</strong> entity/source registries, sourced aliases and relationships, a versioned metric catalogue, framework metadata, manual evidence capture, governed period/unit/FX standardization, reviewer lifecycle, correction history, audit reasons, calculation lineage, immutable data-release snapshots, an Excel report workbook and CSV, a Power BI JSON API, and release/NFR registers.</p>
+      <p><strong>Still outside this build:</strong> automatic source retrieval and document extraction, global external identity resolution, a native Power BI report package, user accounts and SSO, hosted PostgreSQL/object storage, automated monitoring/backup/recovery, performance and security testing, production deployment, and the deferred forecast/AI/valuation/commercial modules.</p></div>
+    </section>
+    <footer class="footer"><a href="/">← Portfolio</a><span>FIP Enterprise v2.1 · Release 1 foundation</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='js/fip.js') }}" defer></script>
+</body>
+</html>

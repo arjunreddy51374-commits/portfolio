@@ -12,7 +12,7 @@
 <body>
   <header class="site-header" id="siteHeader"><div class="nav-wrap">
     <a class="brand" href="#home">{{ profile.initials }}<i>.</i></a>
-    <nav id="navLinks"><a href="#about">About</a><a href="#experience">Experience</a><a href="#projects">Projects</a><a href="/finance">Financial Intelligence</a><a href="/health-analytics">Healthcare Analytics</a><a href="#ml">ML Hub</a><a href="/dashboard">Model Dashboard</a><a href="#contact">Contact</a></nav>
+    <nav id="navLinks"><a href="#about">About</a><a href="#experience">Experience</a><a href="#projects">Projects</a><a href="/fip">Financial Intelligence</a><a href="/finance">Calculator</a><a href="/health-analytics">Healthcare Analytics</a><a href="#ml">ML Hub</a><a href="/dashboard">Model Dashboard</a><a href="#contact">Contact</a></nav>
     {% if resume_available %}<a class="nav-resume" href="{{ url_for('static', filename='documents/resume.pdf') }}" download>Résumé</a>{% else %}<a class="nav-resume" href="#contact">Contact</a>{% endif %}
     <button id="navToggle" class="nav-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
   </div></header>
@@ -45,7 +45,7 @@
   </div></div></section>
 
   <section class="section" id="projects"><div class="wrap"><p class="eyebrow">03 / PROJECTS</p><h2>Applied analytics, in health contexts.</h2><div class="project-grid">
-    <a class="project-feature reveal" href="/finance"><span class="project-index">01 / FINANCIAL INTELLIGENCE</span><h3>Financial statement analysis</h3><p>Explore a source-attributed calculator for growth, margins, liquidity, leverage, working capital, and cash flow. Submitted figures remain unreviewed and are not saved.</p><span class="project-link">Open analysis workspace ↗</span></a>
+    <a class="project-feature reveal" href="/fip"><span class="project-index">01 / FINANCIAL INTELLIGENCE</span><h3>Evidence-based FIP</h3><p>Capture public-source financial facts, preserve evidence references, route records through review, and calculate traceable corporate or government metrics.</p><span class="project-link">Open FIP workspace ↗</span></a>
     <a class="project-feature reveal" href="/health-analytics"><span class="project-index">02 / HEALTHCARE ANALYTICS</span><h3>Operational KPI workspace</h3><p>Calculate length of stay, bed occupancy, waiting time, discharge turnaround, and reporting completeness from source-attributed aggregate totals. No sample statistics are fabricated.</p><span class="project-link">Open KPI workspace ↗</span></a>
     {% for project in projects %}<article class="fold-card project reveal"><button class="fold-trigger" aria-expanded="false"><div><em>{{ project.type }}</em><h3>{{ project.title }}</h3></div><span class="plus">+</span></button><div class="fold-content"><p>{{ project.summary }}</p><ul>{% for point in project.highlights %}<li>{{ point }}</li>{% endfor %}</ul>{% if project.note %}<p class="note">{{ project.note }}</p>{% endif %}{% if project.report and project.report in available_static_files %}<a class="report-link" href="{{ url_for('static', filename=project.report) }}" target="_blank" rel="noopener">View MBA project report ↗</a>{% endif %}</div></article>{% endfor %}
   </div></div></section>

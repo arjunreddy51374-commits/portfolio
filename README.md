@@ -29,6 +29,26 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 - The former `POST /api/predict` three-input shortcut now returns HTTP 410. It previously filled 27 of 30 features with medians and was not a valid full-feature assessment. Use `POST /predict` with all 30 named features instead.
 - No patient history, identifiers, or submitted assessment data are persisted. There is no prediction history feature.
 
+## FIP Release 1 prototype
+
+- `GET /fip` opens the persistent financial-intelligence workspace. Its local SQLite database is created at `instance/fip.sqlite3` on the first data request and is excluded from version control.
+- Configure independent admin and reviewer tokens before staff operations:
+
+  ```bash
+  export FIP_ADMIN_TOKEN='use-a-long-random-secret'
+  export FIP_REVIEWER_TOKEN='use-a-different-long-random-secret'
+  python app.py
+  ```
+
+- Admin workflows register entities, sources, aliases, relationships, metric mappings, FX rates and reported observations. Reviewer workflows verify identity/mappings, review source rights, validate evidence, publish facts/calculations and approve release snapshots. Reviewer decisions require an audit reason. Tokens are sent in request headers and held only in the current browser tab.
+- Observations retain original value, currency and unit, standardized amount and currency, reporting period, accounting/fiscal framework, source locator, freshness assessment, validation dimensions and version lineage. Currency conversion requires an approved, period-matched FX record; no rate is silently inferred.
+- Corporate calculations include growth, margins, period-end returns, liquidity, leverage, net debt, free cash flow and cash-flow measures. Return on assets/equity use period-end balances; free cash flow treats capital expenditure as a positive amount and should only be used with an approved mapping that preserves that sign convention. Government calculations include receipts and expenditure composition and period-over-period changes where compatible. Government results require compatible fiscal scope, budget stage, currency and framework. Receipts less expenditure is labeled `net_budget_position`, not an official deficit. Statement-level balance-sheet and cash-flow reconciliations report missing inputs and differences explicitly.
+- The Release 1 formula catalogue remains bounded: CAGR, ROIC, working-capital days, debt/GDP, budget execution and budget-stage variance need additional approved inputs and definitions before they can be calculated safely.
+- Public Web data comes from the latest separately approved immutable release snapshot. `GET /api/fip/delivery/excel.xlsx` creates a native Excel report with Dashboard, Controls, Corporate, Government, Statements, Engine, Raw Data, Standardized Data, Source Register, FX Rates and release-audit tabs. Exact decimal values stay as text so Excel cannot silently round them. The workbook exposes the canonical calculation results and lineage; it does not independently recalculate them. `GET /api/fip/delivery/excel.csv` provides a flat export, and `GET /api/fip/delivery/powerbi` exposes release-versioned JSON. All delivery routes support `?release_id=...` for an earlier approved snapshot.
+- `GET /api/fip/readiness` reports architecture, prototype, release-gate and NFR evidence separately. Gates begin pending, so the app does not claim production readiness. Reviewer evidence can be added in the readiness register.
+- This local build does not fetch source URLs, extract documents, resolve external entity identifiers, provide a native `.xlsx` model or `.pbix` package, use hosted PostgreSQL/object storage, or demonstrate production security, backup/recovery, performance and deployment. Forecasting, valuation, AI research and commercial features remain deferred releases.
+- `GET /finance` remains a separate stateless calculator for unsaved analysis.
+
 ## Financial calculation workspace
 
 - `GET /finance` provides a source-attributed manual input tool; no issuer data is preloaded.
@@ -46,7 +66,7 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 
 ## Testing
 
-Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, API behavior, and explicit multimodal unavailability.
+Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, FIP identity/evidence/calculation/reconciliation/release workflows, CSV/Power BI/Excel delivery, API behavior, and explicit multimodal unavailability.
 
 ## Optional mammography training
 

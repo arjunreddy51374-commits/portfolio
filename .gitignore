@@ -5,6 +5,9 @@ models/*.keras
 models/*.joblib
 models/*metrics*.json
 models/image_class_names.json
+instance/fip.sqlite3
+instance/fip.sqlite3-shm
+instance/fip.sqlite3-wal
 data/mammography/**/*.png
 data/mammography/**/*.jpg
 data/mammography/**/*.jpeg
