@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ profile.name }} — Healthcare & Programme Management</title>
-  <meta name="description" content="Portfolio of {{ profile.name }} — healthcare, programme management, data analytics and machine learning.">
+  <title>{{ profile.name }} — Financial Intelligence · Healthcare · Data</title>
+  <meta name="description" content="{{ profile.name }} explores financial intelligence, healthcare management, and data technology.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -12,8 +12,8 @@
 <body>
   <header class="site-header" id="siteHeader"><div class="nav-wrap">
     <a class="brand" href="#home">{{ profile.initials }}<i>.</i></a>
-    <nav id="navLinks"><a href="#about">About</a><a href="#experience">Experience</a><a href="#projects">Projects</a><a href="#ml">ML Hub</a><a href="/dashboard">Model Dashboard</a><a href="#certifications">Credentials</a><a href="#contact">Contact</a></nav>
-    <a class="nav-resume" href="{{ url_for('static', filename='documents/resume.pdf') }}" download>Résumé</a>
+    <nav id="navLinks"><a href="#about">About</a><a href="#experience">Experience</a><a href="#projects">Projects</a><a href="/finance">Financial Intelligence</a><a href="/health-analytics">Healthcare Analytics</a><a href="#ml">ML Hub</a><a href="/dashboard">Model Dashboard</a><a href="#contact">Contact</a></nav>
+    {% if resume_available %}<a class="nav-resume" href="{{ url_for('static', filename='documents/resume.pdf') }}" download>Résumé</a>{% else %}<a class="nav-resume" href="#contact">Contact</a>{% endif %}
     <button id="navToggle" class="nav-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
   </div></header>
 
@@ -21,11 +21,11 @@
   <section class="hero hero-cinematic" id="home">
     <img class="cinematic-artwork" src="{{ url_for('static', filename='images/cinematic-hero-reference.png') }}" alt="A cinematic peacock-green portfolio opening with a luxury car and gold stage details">
     <div class="hero-content">
-      <p class="hero-welcome">Welcome</p>
-      <h1>{{ profile.name }}</h1>
-      <p class="hero-specialties"><span>Financial Modeling</span><i>·</i>Healthcare Management<i>·</i>Business Analytics</p>
-      <p class="hero-summary">{{ profile.summary }}</p>
-      <a class="enter-world" href="#about"><span>Enter my world</span><b aria-hidden="true">→</b></a>
+      <p class="hero-welcome">{{ profile.name }} · Healthcare · Finance · Data</p>
+      <h1>Turning Data Into<br><span>Better Decisions.</span></h1>
+      <p class="hero-summary">Exploring the intersection of financial intelligence, healthcare management, and data technology.</p>
+      <p class="hero-specialties"><span>Financial Modeling</span><i>·</i>Healthcare Management<i>·</i>Business Analytics<i>·</i>Machine Learning</p>
+      <div class="hero-actions"><a class="enter-world" href="#projects"><span>Explore projects</span><b aria-hidden="true">→</b></a><a class="hero-contact" href="#contact">Contact</a>{% if resume_available %}<a class="hero-contact" href="{{ url_for('static', filename='documents/resume.pdf') }}" download>Résumé ↗</a>{% endif %}</div>
     </div>
   </section>
   <div class="journey-transition" id="journeyTransition" aria-hidden="true">
@@ -37,7 +37,7 @@
 
   <section class="section" id="about"><div class="wrap"><p class="eyebrow">01 / ABOUT</p><h2>Bridging health systems, data, and field delivery.</h2><div class="about-grid reveal">
     <p class="lead">Final-year MBA student at Rathinam School of Business, specializing in Healthcare Management and Supply Chain Management. I translate health-system data and programme indicators into decisions that hold up in the field, not just on a dashboard.</p>
-    <ul class="detail-list"><li><b>Focus areas</b>Public-health programme management, health-systems monitoring, NGO-sector delivery</li><li><b>Toolkit</b>Python, SQL, Advanced Excel, Tableau / Power BI, HMIS data analysis</li><li><b>Grounding</b>Hospital operations, community outreach, and applied ML research</li><li><b>Direction</b>District-level field roles toward NHM / CHAI / GIZ programme work</li></ul>
+    <ul class="detail-list"><li><b>Focus areas</b>Financial intelligence, healthcare operations, public-health programme monitoring</li><li><b>Toolkit</b>Python, SQL, Advanced Excel, Tableau / Power BI, HMIS data analysis</li><li><b>Grounding</b>Hospital operations, community outreach, and applied ML research</li><li><b>Approach</b>Translate data into decisions with explicit sources, definitions, and limitations</li></ul>
   </div></div></section>
 
   <section class="section alt" id="experience"><div class="wrap"><p class="eyebrow">02 / EXPERIENCE</p><h2>Where the work happened.</h2><div class="timeline">
@@ -45,13 +45,15 @@
   </div></div></section>
 
   <section class="section" id="projects"><div class="wrap"><p class="eyebrow">03 / PROJECTS</p><h2>Applied analytics, in health contexts.</h2><div class="project-grid">
-    {% for project in projects %}<article class="fold-card project reveal"><button class="fold-trigger" aria-expanded="false"><div><em>{{ project.type }}</em><h3>{{ project.title }}</h3></div><span class="plus">+</span></button><div class="fold-content"><p>{{ project.summary }}</p><ul>{% for point in project.highlights %}<li>{{ point }}</li>{% endfor %}</ul>{% if project.note %}<p class="note">{{ project.note }}</p>{% endif %}{% if project.report %}<a class="report-link" href="{{ url_for('static', filename=project.report) }}" target="_blank" rel="noopener">View MBA project report ↗</a>{% endif %}</div></article>{% endfor %}
+    <a class="project-feature reveal" href="/finance"><span class="project-index">01 / FINANCIAL INTELLIGENCE</span><h3>Financial statement analysis</h3><p>Explore a source-attributed calculator for growth, margins, liquidity, leverage, working capital, and cash flow. Submitted figures remain unreviewed and are not saved.</p><span class="project-link">Open analysis workspace ↗</span></a>
+    <a class="project-feature reveal" href="/health-analytics"><span class="project-index">02 / HEALTHCARE ANALYTICS</span><h3>Operational KPI workspace</h3><p>Calculate length of stay, bed occupancy, waiting time, discharge turnaround, and reporting completeness from source-attributed aggregate totals. No sample statistics are fabricated.</p><span class="project-link">Open KPI workspace ↗</span></a>
+    {% for project in projects %}<article class="fold-card project reveal"><button class="fold-trigger" aria-expanded="false"><div><em>{{ project.type }}</em><h3>{{ project.title }}</h3></div><span class="plus">+</span></button><div class="fold-content"><p>{{ project.summary }}</p><ul>{% for point in project.highlights %}<li>{{ point }}</li>{% endfor %}</ul>{% if project.note %}<p class="note">{{ project.note }}</p>{% endif %}{% if project.report and project.report in available_static_files %}<a class="report-link" href="{{ url_for('static', filename=project.report) }}" target="_blank" rel="noopener">View MBA project report ↗</a>{% endif %}</div></article>{% endfor %}
   </div></div></section>
 
   <section class="section alt" id="ml"><div class="wrap"><p class="eyebrow">04 / MACHINE LEARNING HUB</p><div class="ml-heading"><div><h2>A working model, not just a skill listed.</h2><p>Breast cancer classification using the Wisconsin dataset, Random Forest, and a Flask prediction API.</p></div><div class="accuracy"><span>569</span><small>DATASET SAMPLES<br>30 FEATURES</small></div></div>
-    <div class="ml-grid"><article class="model-card reveal"><p class="mono">MODEL PROFILE</p><h3>Breast Cancer Classification</h3><dl><div><dt>Dataset</dt><dd>Wisconsin Diagnostic Dataset</dd></div><div><dt>Samples</dt><dd>569</dd></div><div><dt>Features</dt><dd>30 clinical measurements</dd></div></dl><div class="model-tags"><span>Logistic Regression</span><span>Decision Tree</span><span>SVM</span><span class="selected">Random Forest</span></div></article>
-    <form class="demo-card reveal" id="predictionForm"><p class="mono">LIVE PREDICTION / DEMO</p><h3>Try the model</h3><p class="muted">Enter three sample measurements to call the Flask API.</p><label>Mean radius<input name="mean_radius" type="number" step="0.1" value="14.2" required></label><label>Mean texture<input name="mean_texture" type="number" step="0.1" value="20.1" required></label><label>Mean perimeter<input name="mean_perimeter" type="number" step="0.1" value="92.4" required></label><button class="button gold" type="submit">Run prediction <b>→</b></button><output id="predictionResult" aria-live="polite">Ready for a sample input.</output></form></div>
-    <p class="disclaimer">For portfolio and educational demonstration only. This is not medical advice, a clinical decision-support tool, or a diagnostic device.</p>
+    <div class="ml-grid"><article class="model-card reveal"><p class="mono">MODEL PROFILE</p><h3>Breast Cancer Classification</h3><dl><div><dt>Dataset</dt><dd>Wisconsin Diagnostic Breast Cancer dataset</dd></div><div><dt>Samples</dt><dd>569</dd></div><div><dt>Features</dt><dd>30 cell-nuclei measurements</dd></div></dl><div class="model-tags"><span>Logistic Regression</span><span>Decision Tree</span><span>SVM</span><span class="selected">Random Forest</span></div></article>
+    <div class="demo-card reveal"><p class="mono">FULL-FEATURE RESEARCH DEMO</p><h3>Explore the model workflow</h3><p class="muted">The classifier requires all 30 WDBC measurements. The older three-value median-filled shortcut has been removed from the portfolio interface.</p><a class="button gold" href="/dashboard">Open model dashboard <b>→</b></a></div></div>
+    <p class="disclaimer">This demonstration is for educational and research purposes only. It uses digitized cell-nuclei measurements—not medical images. It is not a medical diagnostic service and must not replace assessment by a qualified healthcare professional.</p>
   </div></section>
 
   <section class="section" id="certifications"><div class="wrap"><p class="eyebrow">05 / CREDENTIALS</p><h2>Credentials on record.</h2><div class="cert-grid">{% for cert in certifications %}<article class="cert-card reveal"><div class="cert-stamp">0{{ loop.index }}</div><p class="mono">{{ cert.status }}</p><h3>{{ cert.title }}</h3><span>{{ cert.organization }}</span></article>{% endfor %}</div></div></section>

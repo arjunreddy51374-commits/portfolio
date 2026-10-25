@@ -6,9 +6,10 @@ from typing import Any
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
 MODEL_NAME = "Random Forest"
-MODEL_VERSION = "rf-1.0.0"
+MODEL_VERSION = "rf-1.1.0"
 MAX_FEATURE_VALUE = 1_000_000.0
 
 
@@ -38,11 +39,14 @@ def build_random_forest() -> RandomForestClassifier:
 
 
 def train_prediction_model() -> tuple[RandomForestClassifier, np.ndarray, list[str]]:
-    """Train the live demo estimator on all bundled records (not for clinical use)."""
+    """Fit serving model on the evaluation training partition, never the holdout."""
     features, labels, feature_names, _ = load_dataset()
+    training_features, _, training_labels, _ = train_test_split(
+        features, labels, test_size=0.2, random_state=42, stratify=labels
+    )
     estimator = build_random_forest()
-    estimator.fit(features, labels)
-    return estimator, features, feature_names
+    estimator.fit(training_features, training_labels)
+    return estimator, training_features, feature_names
 
 
 def validate_feature_payload(

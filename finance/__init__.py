@@ -1,0 +1,1 @@
+"""Financial analysis engine and source-data validation."""

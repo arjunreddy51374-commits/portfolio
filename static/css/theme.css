@@ -1,26 +1,26 @@
 :root {
-  --bg: #073b3a;
-  --alt: #0a312f;
-  --panel: #0f4a45;
-  --line: rgba(168, 191, 163, 0.30);
-  --soft: rgba(245, 243, 234, 0.12);
-  --gold: #c5a46d;
-  --cream: #f5f3ea;
-  --dim: #d3ddd0;
-  --muted: #a8bfa3;
+  --bg: #071b17;
+  --alt: #0b3027;
+  --panel: #102b23;
+  --line: rgba(200, 168, 93, 0.28);
+  --soft: rgba(233, 229, 217, 0.12);
+  --gold: #c8a85d;
+  --cream: #e9e5d9;
+  --dim: #d4d9cc;
+  --muted: #afbeb2;
 }
 
-.site-header { background: rgba(7, 59, 58, 0.78); }
-.site-header.scrolled { background: rgba(7, 59, 58, 0.95); }
+.site-header { background: rgba(7, 27, 23, 0.9); }
+.site-header.scrolled { background: rgba(7, 27, 23, 0.98); }
 .grid-glow {
   background:
     linear-gradient(125deg, transparent 45%, rgba(197, 164, 109, 0.08)),
     linear-gradient(90deg, transparent 49.8%, rgba(168, 191, 163, 0.12) 50%, transparent 50.2%);
 }
-.portrait { background: #0b4a46; }
-.demo-card input { background: #062f2d; }
-.demo-card output { background: #083937; }
-.contact { background: linear-gradient(135deg, #0f4a45, #062e2d); }
+.portrait { background: #0b3027; }
+.demo-card input { background: #071b17; }
+.demo-card output { background: #0b3027; }
+.contact { background: linear-gradient(135deg, #0b3027, #071b17); }
 .report-link { color: var(--gold); }
 
 /* A quiet, CSS-drawn luxury-car accent for the opening scene. */
@@ -145,6 +145,24 @@
 .enter-world b { font:1.9rem var(--display); }
 @media (max-width:800px) { .hero-cinematic { min-height:82vh; } .cinematic-artwork { object-position:45% center; } .hero-content { top:clamp(2rem,8vh,5rem); left:5vw; width:min(640px,90vw); min-height:0; } }
 @media (max-width:480px) { .hero-cinematic { min-height:88vh; } .cinematic-artwork { object-position:42% center; } .hero-content { top:8vh; left:4vw; width:92vw; padding:22px 18px; } .hero-cinematic .hero-content h1 { font-size:clamp(2rem,10vw,3rem); } .hero-specialties { gap:6px; font-size:.62rem; } .hero-summary { font-size:.88rem; } .enter-world { min-height:54px; padding:0 18px; font-size:.73rem; } }
+
+.hero-cinematic .hero-content h1 span { color: var(--gold); }
+.hero-specialties { color: var(--cream); }
+.hero-actions { display:flex; align-items:center; flex-wrap:wrap; gap:16px; }
+.hero-contact { color:var(--cream); font:500 .78rem var(--mono); border-bottom:1px solid rgba(200,168,93,.55); padding:8px 2px; }
+.hero-contact:hover { color:var(--gold); border-color:var(--gold); }
+.project-feature { display:block; padding:28px; border:1px solid var(--line); border-radius:8px; background:linear-gradient(145deg,rgba(23,107,85,.26),rgba(11,48,39,.72)); transition:transform .2s,border-color .2s; }
+.project-feature:hover { transform:translateY(-3px); border-color:var(--gold); }
+.project-index { color:var(--gold); font:500 .66rem var(--mono); letter-spacing:.15em; }
+.project-feature h3 { margin:14px 0 8px; color:var(--cream); font:500 1.5rem var(--display); }
+.project-feature p { max-width:680px; color:var(--dim); font-size:.9rem; }
+.project-link { color:var(--gold); font:500 .72rem var(--mono); }
+@media (prefers-reduced-motion: reduce) { .project-feature,.enter-world { transition:none; } .project-feature:hover,.enter-world:hover { transform:none; } }
+@media (max-width:480px) {
+  html,body { overflow-x:clip; }
+  .wrap { padding-left:16px; padding-right:16px; }
+  .contact-grid>* { min-width:0; overflow-wrap:anywhere; }
+}
 
 /* The first screen stays deliberately quiet; navigation returns once the visitor enters the portfolio. */
 body.cinematic-entry .site-header { opacity:0; pointer-events:none; transform:translateY(-12px); }

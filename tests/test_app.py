@@ -6,7 +6,7 @@ from io import BytesIO
 
 import pytest
 
-from app import app, feature_names
+from app import app, feature_names, model
 from ml.model_service import load_dataset
 
 
@@ -31,17 +31,24 @@ def test_dataset_has_expected_wdbc_dimensions_and_classes():
     assert set(labels) == {0, 1}
 
 
+def test_serving_model_is_not_fit_on_the_holdout_partition():
+    assert model.estimators_[0].tree_.n_node_samples[0] <= 455
+
+
 def test_existing_portfolio_homepage_still_renders(client):
     response = client.get("/")
     assert response.status_code == 200
     assert b"Sunilkumar" in response.data
+    assert b"Turning Data Into<br><span>Better Decisions." in response.data
+    assert b"Resume" not in response.data
+    assert b"View MBA project report" in response.data
 
 
 def test_dashboard_renders_all_thirty_features(client):
     response = client.get("/dashboard")
     assert response.status_code == 200
     assert response.data.count(b'type="number"') == 30
-    assert b"not a diagnosis" in response.data.lower()
+    assert b"must not replace assessment by a qualified healthcare professional" in response.data.lower()
 
 
 def test_dashboard_exposes_local_manual_image_review_without_claiming_ai_analysis(client):
@@ -51,6 +58,7 @@ def test_dashboard_exposes_local_manual_image_review_without_claiming_ai_analysi
     assert b"only uploaded if you run the mammography model" in response.data
     assert b"X-ray and ultrasound have no automated image model" in response.data
     assert b'data-image-model-ready="false"' in response.data
+    assert b"must not replace assessment by a qualified healthcare professional" in response.data
 
 
 def test_health_endpoint(client):
@@ -58,6 +66,7 @@ def test_health_endpoint(client):
     assert response.status_code == 200
     assert response.json["status"] == "ok"
     assert response.json["model_loaded"] is True
+    assert response.json["model_version"] == "rf-1.1.0"
     assert response.json["image_model_ready"] is False
 
 
@@ -66,7 +75,7 @@ def test_full_feature_prediction_returns_disclaimer_and_scores(client, sample_pa
     assert response.status_code == 200
     assert response.json["prediction"] in {"Benign", "Malignant"}
     assert response.json["model_output"]["interpretation"].startswith("Model scores")
-    assert "not a diagnosis" in response.json["disclaimer"].lower()
+    assert "must not replace assessment by a qualified healthcare professional" in response.json["disclaimer"].lower()
 
 
 @pytest.mark.parametrize(
@@ -125,14 +134,66 @@ def test_image_training_fails_clearly_without_dataset():
         _check_dataset()
 
 
-def test_legacy_three_feature_route_remains_available(client):
+def test_legacy_three_feature_route_is_retired(client):
     response = client.post(
         "/api/predict",
         json={"mean_radius": 14.2, "mean_texture": 20.1, "mean_perimeter": 92.4},
     )
+    assert response.status_code == 410
+    assert "requires all 30" in response.json["error"]
+
+
+def test_homepage_three_feature_demo_form_is_removed(client):
+    response = client.get("/")
     assert response.status_code == 200
-    assert "classification" in response.json
-    assert "remaining inputs are filled with dataset medians" in response.json["disclaimer"]
+    assert b"id=\"predictionForm\"" not in response.data
+    assert b"three-value median-filled shortcut has been removed" in response.data
+
+
+def test_finance_dashboard_and_analysis_api(client):
+    page = client.get("/finance")
+    assert page.status_code == 200
+    assert b"Numbers, with their" in page.data
+    response = client.post("/api/finance/analyze", json={
+        "currency": "INR", "unit": "millions", "period": "FY2025",
+        "prior_period": "FY2024",
+        "source_url": "https://example.com/annual-report.pdf",
+        "amounts": {"revenue": "200", "prior_revenue": "160"},
+    })
+    assert response.status_code == 200
+    assert response.json["metadata"]["review_status"] == "unreviewed"
+    assert response.json["metrics"]["revenue_growth_percent"]["value_decimal"] == "25.00"
+
+
+def test_finance_api_rejects_invalid_source_and_content_type(client):
+    assert client.post("/api/finance/analyze", data="{}", content_type="text/plain").status_code == 415
+    response = client.post("/api/finance/analyze", json={
+        "currency": "INR", "unit": "millions", "period": "FY2025",
+        "source_url": "http://example.com/report", "amounts": {"revenue": "10"},
+    })
+    assert response.status_code == 400
+    assert "HTTPS" in response.json["error"]
+
+
+def test_healthcare_dashboard_and_aggregate_kpi_api(client):
+    page = client.get("/health-analytics")
+    assert page.status_code == 200
+    assert b"NO DATA LOADED" in page.data
+    assert b"No district, hospital, or programme figures are preloaded" in page.data
+    response = client.post("/api/healthcare/kpis", json={
+        "source_url": "https://example.com/monthly-report.pdf",
+        "period": "April 2025",
+        "values": {"inpatient_days": "300", "discharges": "30"},
+    })
+    assert response.status_code == 200
+    assert response.json["metrics"]["average_length_of_stay_days"]["value_decimal"] == "10"
+    assert response.json["metadata"]["review_status"] == "unreviewed"
+    assert response.json["metadata"]["human_review_required_before_publication"] is True
+
+
+def test_healthcare_kpi_api_requires_source_url(client):
+    response = client.post("/api/healthcare/kpis", json={"period": "April", "values": {}})
+    assert response.status_code == 400
 
 
 def test_evaluation_endpoint_reports_metrics_or_explicit_unavailability(client):
