@@ -1,0 +1,225 @@
+{
+  "model_name": "Random Forest",
+  "model_version": "rf-1.0.0",
+  "selected_model": "Random Forest",
+  "dataset": {
+    "name": "Wisconsin Diagnostic Breast Cancer (scikit-learn bundled copy)",
+    "samples": 569,
+    "features": 30,
+    "classes": {
+      "malignant": 212,
+      "benign": 357
+    },
+    "feature_minima": [
+      6.981,
+      9.71,
+      43.79,
+      143.5,
+      0.05263,
+      0.01938,
+      0.0,
+      0.0,
+      0.106,
+      0.04996,
+      0.1115,
+      0.3602,
+      0.757,
+      6.802,
+      0.001713,
+      0.002252,
+      0.0,
+      0.0,
+      0.007882,
+      0.0008948,
+      7.93,
+      12.02,
+      50.41,
+      185.2,
+      0.07117,
+      0.02729,
+      0.0,
+      0.0,
+      0.1565,
+      0.05504
+    ],
+    "feature_maxima": [
+      28.11,
+      39.28,
+      188.5,
+      2501.0,
+      0.1634,
+      0.3454,
+      0.4268,
+      0.2012,
+      0.304,
+      0.09744,
+      2.873,
+      4.885,
+      21.98,
+      542.2,
+      0.03113,
+      0.1354,
+      0.396,
+      0.05279,
+      0.07895,
+      0.02984,
+      36.04,
+      49.54,
+      251.2,
+      4254.0,
+      0.2226,
+      1.058,
+      1.252,
+      0.291,
+      0.6638,
+      0.2075
+    ]
+  },
+  "evaluation_protocol": {
+    "holdout": "Stratified 80/20 train/test split; random_state=42",
+    "cross_validation": "5-fold stratified cross-validation on training partition only",
+    "positive_class": "malignant",
+    "negative_class": "benign",
+    "confusion_matrix_layout": "[[true benign, false malignant], [missed malignant, true malignant]]",
+    "metrics_source": "held-out test split; cross-validation accuracy reported separately",
+    "clinical_validation": false
+  },
+  "split": {
+    "train_samples": 455,
+    "test_samples": 114
+  },
+  "models": [
+    {
+      "name": "Logistic Regression",
+      "test": {
+        "accuracy": 0.9649122807017544,
+        "sensitivity_malignant": 0.9285714285714286,
+        "specificity_benign": 0.9861111111111112,
+        "precision_malignant": 0.975,
+        "f1_malignant": 0.9512195121951219,
+        "roc_auc": 0.996031746031746,
+        "confusion_matrix": {
+          "true_benign": 71,
+          "false_malignant": 1,
+          "missed_malignant": 3,
+          "true_malignant": 39
+        }
+      },
+      "cross_validation": {
+        "folds": 5,
+        "accuracy_mean": 0.9714285714285715,
+        "accuracy_std": 0.012529400275814697
+      }
+    },
+    {
+      "name": "Decision Tree",
+      "test": {
+        "accuracy": 0.9298245614035088,
+        "sensitivity_malignant": 0.9047619047619048,
+        "specificity_benign": 0.9444444444444444,
+        "precision_malignant": 0.9047619047619048,
+        "f1_malignant": 0.9047619047619048,
+        "roc_auc": 0.9246031746031745,
+        "confusion_matrix": {
+          "true_benign": 68,
+          "false_malignant": 4,
+          "missed_malignant": 4,
+          "true_malignant": 38
+        }
+      },
+      "cross_validation": {
+        "folds": 5,
+        "accuracy_mean": 0.9318681318681318,
+        "accuracy_std": 0.0314677386006074
+      }
+    },
+    {
+      "name": "Support Vector Machine",
+      "test": {
+        "accuracy": 0.9736842105263158,
+        "sensitivity_malignant": 0.9285714285714286,
+        "specificity_benign": 1.0,
+        "precision_malignant": 1.0,
+        "f1_malignant": 0.9629629629629629,
+        "roc_auc": 0.9947089947089947,
+        "confusion_matrix": {
+          "true_benign": 72,
+          "false_malignant": 0,
+          "missed_malignant": 3,
+          "true_malignant": 39
+        }
+      },
+      "cross_validation": {
+        "folds": 5,
+        "accuracy_mean": 0.9736263736263737,
+        "accuracy_std": 0.014743305346152457
+      }
+    },
+    {
+      "name": "Random Forest",
+      "test": {
+        "accuracy": 0.9649122807017544,
+        "sensitivity_malignant": 0.9047619047619048,
+        "specificity_benign": 1.0,
+        "precision_malignant": 1.0,
+        "f1_malignant": 0.95,
+        "roc_auc": 0.9953703703703703,
+        "confusion_matrix": {
+          "true_benign": 72,
+          "false_malignant": 0,
+          "missed_malignant": 4,
+          "true_malignant": 38
+        }
+      },
+      "cross_validation": {
+        "folds": 5,
+        "accuracy_mean": 0.9582417582417584,
+        "accuracy_std": 0.03916160369495706
+      }
+    }
+  ],
+  "feature_importance": [
+    {
+      "name": "worst perimeter",
+      "importance": 0.1536042304289957
+    },
+    {
+      "name": "worst area",
+      "importance": 0.13253199781958963
+    },
+    {
+      "name": "worst concave points",
+      "importance": 0.11573254549702765
+    },
+    {
+      "name": "worst radius",
+      "importance": 0.09496058581078162
+    },
+    {
+      "name": "mean concave points",
+      "importance": 0.08493370682346411
+    },
+    {
+      "name": "mean perimeter",
+      "importance": 0.05905286740700209
+    },
+    {
+      "name": "mean radius",
+      "importance": 0.05817662186819343
+    },
+    {
+      "name": "mean concavity",
+      "importance": 0.04383274011697988
+    },
+    {
+      "name": "mean area",
+      "importance": 0.04304795271606988
+    },
+    {
+      "name": "worst concavity",
+      "importance": 0.03432982926077006
+    }
+  ],
+  "generated_at_utc": "2026-10-25T09:26:12.244418+00:00",
+  "warning": "Research/education demonstration only. This model is not a diagnostic or clinical decision-support device."
+}

@@ -1,0 +1,7 @@
+{
+  "Data & Machine Learning": ["Python", "Scikit-learn", "SQL", "Pandas"],
+  "Analytics & Reporting": ["Advanced Excel", "Tableau", "Power BI", "HMIS Data Analysis"],
+  "Finance & Modeling": ["Financial Modeling"],
+  "Programme & Field": ["Programme Coordination", "Field Monitoring", "Health Systems Reporting", "Community Outreach"],
+  "Web & Documentation": ["HTML / CSS", "Report Writing"]
+}

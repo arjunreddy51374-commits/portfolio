@@ -1,0 +1,174 @@
+:root {
+  --bg: #073b3a;
+  --alt: #0a312f;
+  --panel: #0f4a45;
+  --line: rgba(168, 191, 163, 0.30);
+  --soft: rgba(245, 243, 234, 0.12);
+  --gold: #c5a46d;
+  --cream: #f5f3ea;
+  --dim: #d3ddd0;
+  --muted: #a8bfa3;
+}
+
+.site-header { background: rgba(7, 59, 58, 0.78); }
+.site-header.scrolled { background: rgba(7, 59, 58, 0.95); }
+.grid-glow {
+  background:
+    linear-gradient(125deg, transparent 45%, rgba(197, 164, 109, 0.08)),
+    linear-gradient(90deg, transparent 49.8%, rgba(168, 191, 163, 0.12) 50%, transparent 50.2%);
+}
+.portrait { background: #0b4a46; }
+.demo-card input { background: #062f2d; }
+.demo-card output { background: #083937; }
+.contact { background: linear-gradient(135deg, #0f4a45, #062e2d); }
+.report-link { color: var(--gold); }
+
+/* A quiet, CSS-drawn luxury-car accent for the opening scene. */
+.car-scene {
+  position: absolute;
+  right: clamp(1.5rem, 7vw, 7rem);
+  bottom: 2.8rem;
+  width: 255px;
+  height: 135px;
+  opacity: .86;
+  pointer-events: none;
+}
+.car-scene .moon {
+  position: absolute;
+  right: 13px;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(245, 243, 234, .9);
+  box-shadow: 0 0 34px rgba(245, 243, 234, .42);
+}
+.road {
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  bottom: 6px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.car { position: absolute; bottom: 10px; left: 35px; width: 188px; height: 76px; }
+.car-body {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 188px;
+  height: 36px;
+  border: 1px solid rgba(245,243,234,.78);
+  border-radius: 16px 29px 10px 11px;
+  background: linear-gradient(135deg, #0d625d, #073b3a 65%);
+  box-shadow: inset 0 1px 0 rgba(245,243,234,.15), 0 9px 20px rgba(0,0,0,.25);
+}
+.car-roof {
+  position: absolute;
+  z-index: 2;
+  left: 45px;
+  bottom: 42px;
+  width: 92px;
+  height: 27px;
+  border: 1px solid rgba(245,243,234,.75);
+  border-bottom: 0;
+  border-radius: 27px 35px 0 0;
+  background: #0d625d;
+}
+.car-window { position: absolute; z-index: 3; bottom: 45px; height: 19px; background: #092f32; transform:skewX(-12deg); }
+.car-window.rear { left: 52px; width: 37px; border-radius: 9px 0 0 0; }
+.car-window.front { left: 94px; width: 34px; border-radius: 0 12px 0 0; }
+.grille { position:absolute; z-index:3; right:3px; bottom:17px; width:25px; height:8px; border-top:1px solid var(--gold); border-bottom:1px solid var(--gold); }
+.headlight { position:absolute; z-index:4; right:1px; bottom:30px; width:8px; height:5px; border-radius:4px; background:var(--cream); box-shadow:0 0 12px var(--cream); }
+.wheel { position:absolute; z-index:4; bottom:0; width:27px; height:27px; border-radius:50%; border:5px solid #071b1b; background:#a8bfa3; box-shadow:0 0 0 2px rgba(245,243,234,.45); }
+.wheel-left { left:27px; }.wheel-right { right:27px; }
+@media (max-width: 800px) { .car-scene { right: 1.2rem; bottom: 1.5rem; transform:scale(.72); transform-origin:bottom right; } }
+@media (max-width: 480px) { .car-scene { opacity:.55; right:-2rem; } }
+
+/* Cinematic hero refinements: atmospheric, quiet, and deliberately secondary to the portfolio. */
+.hero {
+  background:
+    radial-gradient(circle at 80% 30%, rgba(168,191,163,.13), transparent 21rem),
+    radial-gradient(circle at 25% 90%, rgba(197,164,109,.10), transparent 22rem),
+    var(--bg);
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 115px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(6,46,45,.84));
+}
+.hero-inner { z-index: 2; }
+.car-scene {
+  right: clamp(1.25rem, 7vw, 7rem);
+  bottom: 3.1rem;
+  width: 330px;
+  height: 175px;
+}
+.stage-glow {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  width: 260px;
+  height: 108px;
+  border-radius: 50%;
+  border: 1px solid rgba(168,191,163,.16);
+  background: radial-gradient(ellipse, rgba(168,191,163,.14), transparent 68%);
+  filter: blur(1px);
+}
+.car-scene .moon { right: 24px; top: 7px; width: 27px; height: 27px; opacity: .82; }
+.car { transform: scale(1.18); transform-origin: bottom left; left: 45px; bottom: 16px; }
+.road { left: -18px; right: -18px; bottom: 13px; height: 2px; background: linear-gradient(90deg, transparent, rgba(197,164,109,.92), transparent); }
+.road span { position:absolute; bottom:-7px; width:28px; height:1px; background:rgba(168,191,163,.58); }
+.road span:nth-child(1){left:26%}.road span:nth-child(2){left:47%}.road span:nth-child(3){left:68%}
+.scene-caption { position:absolute; left:0; bottom:-15px; margin:0; color:var(--muted); font:500 .55rem var(--mono); letter-spacing:.19em; }
+@media (max-width: 800px) { .car-scene { bottom: 2.1rem; transform:scale(.77); transform-origin:bottom right; } }
+@media (max-width: 480px) { .car-scene { right:-2.7rem; bottom:1.65rem; opacity:.58; } .scene-caption { display:none; } }
+
+/* Full-bleed editorial opening, based on the supplied visual reference. */
+.hero-cinematic { min-height: min(100vh, 1024px); padding: 0; background: #050b0b; }
+.cinematic-artwork { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
+.hero-cinematic::after { content:''; position:absolute; inset:0; height:auto; background:linear-gradient(90deg,rgba(3,14,14,.13),transparent 62%); }
+.hero-specialty { position:absolute; z-index:2; top:43.5%; left:clamp(2rem,7.2vw,7rem); margin:0; color:#e8c88e; font:500 clamp(.72rem,1.2vw,1rem) var(--mono); letter-spacing:.14em; text-transform:uppercase; text-shadow:0 1px 8px rgba(0,0,0,.9); }
+.enter-world { position:absolute; z-index:3; left:clamp(2rem,11.5vw,11rem); bottom:clamp(7rem,24vh,16rem); width:330px; height:66px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; border:1px solid rgba(197,164,109,.92); border-radius:5px; color:#f5dfb3; font:500 1rem var(--mono); letter-spacing:.1em; text-transform:uppercase; background:#041010; transition:.25s; }
+.enter-world:hover { background:rgba(197,164,109,.12); box-shadow:0 0 24px rgba(197,164,109,.28); transform:translateY(-2px); }
+.enter-world b { font:1.9rem var(--display); }
+.hero-accessible-copy { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+@media (max-width:800px) { .hero-cinematic { min-height:72vh; } .cinematic-artwork { object-position:45% center; } .enter-world { left:8vw; bottom:13vh; width:min(78vw,330px); } }
+@media (max-width:480px) { .hero-cinematic { min-height:64vh; } .cinematic-artwork { object-position:42% center; } .enter-world { bottom:7vh; height:56px; padding:0 19px; font-size:.73rem; } }
+
+/* The first screen stays deliberately quiet; navigation returns once the visitor enters the portfolio. */
+body.cinematic-entry .site-header { opacity:0; pointer-events:none; transform:translateY(-12px); }
+.site-header { transition:opacity .45s ease, transform .45s ease, border-color .3s ease, background .3s ease; }
+body.cinematic-entry .site-header:focus-within { opacity:1; pointer-events:auto; transform:none; }
+#about { scroll-margin-top:70px; }
+
+/* Silent, deliberately brief journey transition between the cinematic entry and the portfolio. */
+.journey-transition { position:fixed; z-index:50; inset:0; display:grid; place-items:center; overflow:hidden; visibility:hidden; opacity:0; pointer-events:none; background:radial-gradient(ellipse at 55% 68%, #123c3a 0%, #061515 44%, #020505 100%); transition:opacity .35s ease, visibility .35s ease; }
+.journey-running .journey-transition { visibility:visible; opacity:1; }
+.journey-transition::before { content:''; position:absolute; inset:0; background:linear-gradient(100deg, transparent 28%, rgba(168,191,163,.06) 50%, transparent 72%); }
+.journey-transition p { position:absolute; z-index:2; bottom:12vh; margin:0; color:rgba(245,243,234,.66); font:500 .64rem var(--mono); letter-spacing:.22em; text-transform:uppercase; opacity:0; }
+.journey-running .journey-transition p { animation:journey-label 2.4s ease both; }
+.journey-road { position:absolute; z-index:1; left:-10%; right:-10%; bottom:30%; height:2px; background:linear-gradient(90deg, transparent, rgba(197,164,109,.75), transparent); transform:perspective(240px) rotateX(58deg); }
+.journey-road i { position:absolute; top:18px; height:2px; width:70px; background:rgba(168,191,163,.48); animation:road-lines .48s linear infinite; }
+.journey-road i:nth-child(1){left:10%}.journey-road i:nth-child(2){left:45%;animation-delay:.15s}.journey-road i:nth-child(3){left:79%;animation-delay:.3s}
+.journey-car { position:absolute; z-index:3; left:14%; bottom:28%; width:255px; height:106px; opacity:0; }
+.journey-body { position:absolute; bottom:16px; left:0; width:250px; height:49px; border:1px solid rgba(245,243,234,.78); border-radius:22px 40px 12px 13px; background:linear-gradient(135deg,#126760,#073b3a 66%); box-shadow:inset 0 1px 0 rgba(245,243,234,.18),0 13px 28px rgba(0,0,0,.45); }
+.journey-roof { position:absolute; z-index:2; bottom:60px; left:61px; width:124px; height:39px; border:1px solid rgba(245,243,234,.72); border-bottom:0; border-radius:38px 48px 0 0; background:#126760; }
+.journey-window { position:absolute; z-index:3; bottom:64px; height:26px; background:#061d1e; transform:skewX(-12deg); }
+.window-one { left:70px; width:48px; border-radius:12px 0 0 0; }.window-two { left:125px; width:47px; border-radius:0 16px 0 0; }
+.journey-light { position:absolute; z-index:4; right:0; bottom:44px; width:11px; height:7px; border-radius:6px; background:var(--cream); box-shadow:0 0 24px 6px rgba(245,243,234,.54); }
+.journey-wheel { position:absolute; z-index:4; bottom:0; width:36px; height:36px; border:7px solid #051617; border-radius:50%; background:#a8bfa3; box-shadow:0 0 0 2px rgba(245,243,234,.38); }.left-wheel{left:36px}.right-wheel{right:37px}
+.exhaust { position:absolute; z-index:1; left:-82px; bottom:35px; width:102px; height:34px; opacity:0; }.exhaust i { position:absolute; width:58px; height:16px; border-radius:50%; background:radial-gradient(ellipse,rgba(197,164,109,.8),rgba(82,132,123,.32) 42%,transparent 70%); filter:blur(5px); }.exhaust i:nth-child(1){left:48px;top:5px}.exhaust i:nth-child(2){left:20px;top:12px}.exhaust i:nth-child(3){left:0;top:1px}
+.journey-haze { position:absolute; width:44vw; height:44vw; border-radius:50%; background:radial-gradient(circle,rgba(168,191,163,.1),transparent 66%); filter:blur(18px); opacity:0; }.haze-one{left:-18%;top:12%}.haze-two{right:-18%;bottom:-12%}
+.journey-running .journey-car { animation:car-drive 2.4s cubic-bezier(.2,.72,.27,1) both; }.journey-running .exhaust { animation:exhaust-bloom 1.3s .3s ease-out both; }.journey-running .journey-haze { animation:haze-pass 2.3s ease both; }.journey-running .haze-two{animation-delay:.22s}
+@keyframes car-drive { 0%{transform:translateX(-42vw) scale(.62);opacity:0} 15%{opacity:1} 72%{transform:translateX(26vw) scale(1.05);opacity:1} 100%{transform:translateX(100vw) scale(1.35);opacity:0} }
+@keyframes road-lines { from{transform:translateX(-20vw);opacity:0} 25%{opacity:1} to{transform:translateX(34vw);opacity:0} }
+@keyframes exhaust-bloom { 0%{opacity:0;transform:scale(.4)} 25%{opacity:1} 100%{opacity:0;transform:translateX(-70px) scale(2.5)} }
+@keyframes haze-pass { 0%{opacity:0;transform:translateX(-10vw) scale(.7)} 45%{opacity:.85} 100%{opacity:0;transform:translateX(42vw) scale(1.25)} }
+@keyframes journey-label { 0%,25%{opacity:0} 43%,70%{opacity:1} 100%{opacity:0} }
+@media (max-width:650px){.journey-car{left:4%;bottom:33%;transform:scale(.73);transform-origin:bottom left}.journey-transition p{bottom:17vh}.journey-road{bottom:35%}}

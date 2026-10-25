@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+models/*.keras
+models/*.joblib
+models/*metrics*.json
+models/image_class_names.json
+data/mammography/**/*.png
+data/mammography/**/*.jpg
+data/mammography/**/*.jpeg
+data/mammography/**/*.bmp
+data/mammography/**/*.tif
+data/mammography/**/*.tiff
+data/mammography/**/*.webp

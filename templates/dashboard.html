@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Research and education dashboard for a Wisconsin breast-cancer dataset classification project.">
+  <title>Research Dashboard · Breast Cancer Classification</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to dashboard</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Return to portfolio"><span class="brand-mark">BC</span><span>Research workspace<small>ML classification study</small></span></a>
+    <nav aria-label="Main navigation">
+      <a href="#overview">Dashboard</a><a href="#assessment">New assessment</a><a href="#image-review">Image review</a><a href="#performance">Performance</a><a href="#comparison">Model comparison</a><a href="#explainability">Explainability</a><a href="#model-info">Model information</a><a href="#about-project">About</a>
+    </nav>
+    <span class="environment"><i></i> Research demo</span>
+  </header>
+
+  <main id="main" class="page-shell" data-image-model-ready="{{ 'true' if image_model_ready else 'false' }}">
+    <section class="intro" id="overview">
+      <div><p class="eyebrow">RESEARCH / ANALYTICS</p><h1>Breast Cancer<br><span>Classification Study</span></h1><p class="intro-copy">A transparent machine-learning demonstration using structured measurements from the Wisconsin Diagnostic Breast Cancer dataset.</p></div>
+      <aside class="status-card"><span class="status-dot"></span><div><strong>Model ready</strong><small>{{ model_name }} · {{ model_version }}</small></div><a href="#assessment" class="button button-primary">Start assessment <span aria-hidden="true">→</span></a></aside>
+    </section>
+
+    <section class="section-block" aria-labelledby="metrics-title">
+      <div class="section-heading"><div><p class="eyebrow">01 / HELD-OUT RESULTS</p><h2 id="metrics-title">Test-set performance</h2></div><p class="section-note">{{ evaluation.split.test_samples if evaluation else '—' }} independent test samples · Stratified hold-out split</p></div>
+      <div class="metric-grid">
+        {% set selected = (evaluation.models | selectattr('name', 'equalto', evaluation.selected_model) | first) if evaluation else none %}
+        {% for key, label, description in [('accuracy','Accuracy','Correct classifications'), ('sensitivity_malignant','Sensitivity','Malignant cases detected'), ('specificity_benign','Specificity','Benign cases identified'), ('roc_auc','ROC AUC','Threshold-independent ranking')] %}
+        <article class="metric-card"><div class="metric-label">{{ label }}<span title="Held-out test split">ⓘ</span></div><strong>{{ '%.1f'|format(selected.test[key] * 100) ~ '%' if selected else 'Not evaluated' }}</strong><small>{{ description }} · test set</small></article>
+        {% endfor %}
+      </div>
+      {% if evaluation %}<p class="inline-note">Cross-validation is shown separately below. Metrics above are from the held-out test set and are not clinical validation.</p>{% else %}<p class="inline-note">Evaluation has not been generated. Run <code>python -m ml.evaluate</code> to create the report.</p>{% endif %}
+    </section>
+
+    <section class="section-block" id="assessment" aria-labelledby="assessment-title">
+      <div class="section-heading"><div><p class="eyebrow">02 / STRUCTURED INPUT</p><h2 id="assessment-title">New assessment</h2><p class="section-note">Enter all 30 numerical fields in the dataset's documented feature order. No patient identifiers are collected.</p></div><span class="pill">No patient data stored</span></div>
+      <form id="assessment-form" class="assessment-form" novalidate>
+        {% for group, features in feature_groups %}
+        <fieldset class="feature-group"><legend>{{ group }}</legend><p>Numeric values from the Wisconsin Diagnostic dataset format.</p><div class="input-grid">
+          {% for feature in features %}<label>{{ feature|title }}<input type="number" name="{{ feature }}" min="0" max="1000000" step="any" inputmode="decimal" required aria-describedby="input-help"><span class="field-error" aria-live="polite"></span></label>{% endfor %}
+        </div></fieldset>
+        {% endfor %}
+        <p class="help-text" id="input-help">Values must be finite and non-negative. This is an input-format check, not a clinical reference range.</p>
+        <div class="form-actions"><button class="button button-primary" type="submit"><span class="button-label">Run research demo</span><span class="spinner" aria-hidden="true"></span></button><button class="button button-secondary" type="reset">Clear all</button></div>
+        <div id="prediction-result" class="result-panel" role="status" aria-live="polite" tabindex="-1" hidden></div>
+      </form>
+      <p class="disclaimer"><strong>Important:</strong> Educational/research demonstration only. The output is not a diagnosis or a patient-level risk estimate. Do not use it for screening, treatment, or patient care.</p>
+    </section>
+
+    <section class="section-block" id="image-review" aria-labelledby="image-review-title">
+      <div class="section-heading"><div><p class="eyebrow">03 / IMAGE VIEWER</p><h2 id="image-review-title">X-ray, ultrasound & mammography review</h2><p class="section-note">X-ray and ultrasound previews and notes stay local. The optional research model, when trained, is mammography-only and uploads only when explicitly run.</p></div><span class="pill {{ 'available-pill' if image_model_ready else 'unavailable-pill' }}">{{ 'Mammography model ready' if image_model_ready else 'Mammography model unavailable' }}</span></div>
+      <div class="image-review-grid">
+        <form id="image-review-form" class="image-review-form">
+          <label class="review-label" for="image-modality">Image modality</label>
+          <select id="image-modality" name="modality" required><option value="">Choose modality</option><option value="X-ray">X-ray · manual viewer only</option><option value="Ultrasound">Ultrasound · manual viewer only</option><option value="Mammography">Mammography · optional model</option><option value="Other">Other image</option></select>
+          <label class="upload-box" for="image-file"><span class="upload-icon" aria-hidden="true">＋</span><strong>Select an image to preview</strong><small>JPEG, PNG, WebP, BMP, or TIFF · only uploaded if you run the mammography model</small><input id="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/tiff" aria-describedby="image-file-help"></label>
+          <span id="image-file-help" class="help-text">Viewer and optional mammography endpoint support JPEG, PNG, WebP, BMP, and TIFF. DICOM is not supported.</span>
+          <label class="review-label" for="manual-image-notes">Your manual notes <span>(optional)</span></label>
+          <textarea id="manual-image-notes" rows="4" maxlength="2000" placeholder="Enter notes from your own review. These are not generated or verified by an AI model."></textarea>
+          <p id="image-model-guidance" class="help-text" aria-live="polite">X-ray and ultrasound have no automated image model. Manual notes are not diagnostic advice.</p>
+          <button class="button button-primary" id="analyze-mammogram" type="button" hidden {% if not image_model_ready %}disabled{% endif %}>Run mammography research model</button>
+          <div id="image-analysis-result" class="result-panel" role="status" aria-live="polite" hidden></div>
+          <button class="button button-secondary" id="clear-image-review" type="reset">Clear image and notes</button>
+        </form>
+        <div class="image-preview-card" id="image-preview-card">
+          <div id="image-empty-state" class="image-empty-state"><span aria-hidden="true">▧</span><strong>No image selected</strong><p>Choose an image to view a temporary local preview.</p></div>
+          <img id="image-preview" alt="Local preview of selected medical image" hidden>
+          <p id="image-file-details" class="image-file-details" aria-live="polite" hidden></p>
+        </div>
+      </div>
+      <p class="disclaimer"><strong>Important:</strong> X-ray and ultrasound image analysis is not implemented. The optional mammography model is a separate research scaffold, requires the correct labeled dataset, and is not clinically validated. No image result confirms a diagnosis or should be used for patient care. Multimodal fusion remains unavailable.</p>
+    </section>
+
+    <section class="section-block two-column" id="performance">
+      <article class="panel"><div class="section-heading compact"><div><p class="eyebrow">03 / ERROR PROFILE</p><h2>Confusion matrix</h2></div></div>
+        {% if selected %}{% set cm = selected.test.confusion_matrix %}
+        <div class="matrix-wrap"><table class="matrix"><caption>Held-out test results · Rows are actual class; columns are predicted class</caption><thead><tr><th scope="col">Actual / predicted</th><th scope="col">Benign</th><th scope="col">Malignant</th></tr></thead><tbody><tr><th scope="row">Benign</th><td class="correct">{{ cm.true_benign }}<small>true negative</small></td><td class="error-cell">{{ cm.false_malignant }}<small>false positive</small></td></tr><tr><th scope="row">Malignant</th><td class="error-cell">{{ cm.missed_malignant }}<small>false negative</small></td><td class="correct">{{ cm.true_malignant }}<small>true positive</small></td></tr></tbody></table></div>
+        {% else %}<p class="empty-state">Not evaluated yet. Generate the saved evaluation report to view test-set errors.</p>{% endif %}
+      </article>
+      <article class="panel" id="comparison"><div class="section-heading compact"><div><p class="eyebrow">04 / CANDIDATE REVIEW</p><h2>Model comparison</h2></div></div>
+        {% if evaluation %}<div class="comparison-list">{% for item in evaluation.models %}<div class="comparison-row"><div class="comparison-label"><strong>{{ item.name }}</strong><span>Test {{ '%.1f'|format(item.test.accuracy * 100) }}% · CV {{ '%.1f'|format(item.cross_validation.accuracy_mean * 100) }}% ± {{ '%.1f'|format(item.cross_validation.accuracy_std * 100) }}</span></div><div class="bar-track" role="img" aria-label="{{ item.name }} held-out test accuracy {{ '%.1f'|format(item.test.accuracy * 100) }} percent"><span style="width:{{ '%.2f'|format(item.test.accuracy * 100) }}%"></span></div></div>{% endfor %}</div><p class="inline-note">Bars show held-out test accuracy. CV values are mean ± standard deviation, computed only on the training partition.</p>{% else %}<p class="empty-state">Not evaluated yet.</p>{% endif %}
+      </article>
+    </section>
+
+    <section class="section-block two-column" id="explainability">
+      <article class="panel"><div class="section-heading compact"><div><p class="eyebrow">05 / GLOBAL EXPLAINABILITY</p><h2>Feature importance</h2></div></div>
+        {% if evaluation %}<p class="section-note">Top features by Random Forest impurity importance, fitted on the training partition. This is a global summary, not an explanation of an individual assessment.</p><div class="importance-list">{% for item in evaluation.feature_importance %}<div class="importance-row"><span>{{ item.name|title }}</span><div class="bar-track"><span style="width:{{ '%.2f'|format(item.importance * 100) }}%"></span></div><small>{{ '%.3f'|format(item.importance) }}</small></div>{% endfor %}</div>{% else %}<p class="empty-state">Not evaluated yet.</p>{% endif %}
+      </article>
+      <article class="panel" id="model-info"><div class="section-heading compact"><div><p class="eyebrow">06 / MODEL INFORMATION</p><h2>Methods & limits</h2></div></div>
+        <dl class="info-list"><div><dt>Selected model</dt><dd>{{ model_name }} · {{ model_version }}</dd></div><div><dt>Preprocessing</dt><dd>Raw dataset feature values; StandardScaler is applied in the LR and SVM candidate pipelines only.</dd></div><div><dt>Positive class</dt><dd>Malignant (sensitivity is reported for malignant cases).</dd></div><div><dt>Model outputs</dt><dd>Uncalibrated classifier scores; not patient-level probabilities.</dd></div><div><dt>Image pathway</dt><dd>{% if image_model_ready %}Optional mammography-only research model loaded; not evaluated clinically. No X-ray/ultrasound support.{% else %}Optional mammography model not trained or loaded. No X-ray/ultrasound support.{% endif %}</dd></div><div><dt>Fusion</dt><dd>Unavailable. No paired-data fusion model is implemented.</dd></div><div><dt>Clinical validation</dt><dd>Not performed. Not for clinical use.</dd></div></dl>
+      </article>
+    </section>
+
+    <section class="section-block about-panel" id="about-project"><p class="eyebrow">07 / ABOUT THIS PROJECT</p><h2>Transparent research, not a clinical product.</h2><p>This interactive dashboard compares four classical classifiers on the scikit-learn bundled copy of the Wisconsin Diagnostic Breast Cancer dataset. A stratified 80/20 split is held out for final metrics. Five-fold cross-validation runs only on the training partition. Results describe this dataset and protocol only; they do not establish performance on other populations or clinical settings.</p><p class="data-note"><strong>Dataset verified:</strong> {{ evaluation.dataset.samples if evaluation else '569' }} records · {{ evaluation.dataset.features if evaluation else '30' }} numerical features · {{ evaluation.dataset.classes.malignant if evaluation else '212' }} malignant · {{ evaluation.dataset.classes.benign if evaluation else '357' }} benign. {% if image_model_ready %}An optional mammography classifier is loaded; it has no clinical validation and does not support X-ray or ultrasound.{% else %}No image classifier is currently loaded.{% endif %} Prediction history and patient record storage are not implemented.</p><a href="/" class="text-link">← Return to portfolio</a></section>
+    <footer class="page-footer"><span>Research demonstration · {{ model_version }}</span><span>Not a medical device · No patient-care use</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+</body>
+</html>

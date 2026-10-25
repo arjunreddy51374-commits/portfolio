@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ profile.name }} — Healthcare & Programme Management</title>
+  <meta name="description" content="Portfolio of {{ profile.name }} — healthcare, programme management, data analytics and machine learning.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body>
+  <header class="site-header" id="siteHeader"><div class="nav-wrap">
+    <a class="brand" href="#home">{{ profile.initials }}<i>.</i></a>
+    <nav id="navLinks"><a href="#about">About</a><a href="#experience">Experience</a><a href="#projects">Projects</a><a href="#ml">ML Hub</a><a href="/dashboard">Model Dashboard</a><a href="#certifications">Credentials</a><a href="#contact">Contact</a></nav>
+    <a class="nav-resume" href="{{ url_for('static', filename='documents/resume.pdf') }}" download>Résumé</a>
+    <button id="navToggle" class="nav-toggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+  </div></header>
+
+  <main>
+  <section class="hero hero-cinematic" id="home">
+    <img class="cinematic-artwork" src="{{ url_for('static', filename='images/cinematic-hero-reference.png') }}" alt="A cinematic peacock-green portfolio opening with a luxury car and gold stage details">
+    <p class="hero-specialty">Financial Modeling</p>
+    <a class="enter-world" href="#about"><span>Enter my world</span><b>→</b></a>
+    <div class="hero-accessible-copy"><h1>{{ profile.name }}</h1><p>{{ profile.summary }}</p></div>
+  </section>
+  <div class="journey-transition" id="journeyTransition" aria-hidden="true">
+    <div class="journey-haze haze-one"></div><div class="journey-haze haze-two"></div>
+    <div class="journey-road"><i></i><i></i><i></i></div>
+    <div class="journey-car"><div class="journey-roof"></div><div class="journey-window window-one"></div><div class="journey-window window-two"></div><div class="journey-body"></div><div class="journey-light"></div><div class="journey-wheel left-wheel"></div><div class="journey-wheel right-wheel"></div><div class="exhaust"><i></i><i></i><i></i></div></div>
+    <p>Entering the portfolio</p>
+  </div>
+
+  <section class="section" id="about"><div class="wrap"><p class="eyebrow">01 / ABOUT</p><h2>Bridging health systems, data, and field delivery.</h2><div class="about-grid reveal">
+    <p class="lead">Final-year MBA student at Rathinam School of Business, specializing in Healthcare Management and Supply Chain Management. I translate health-system data and programme indicators into decisions that hold up in the field, not just on a dashboard.</p>
+    <ul class="detail-list"><li><b>Focus areas</b>Public-health programme management, health-systems monitoring, NGO-sector delivery</li><li><b>Toolkit</b>Python, SQL, Advanced Excel, Tableau / Power BI, HMIS data analysis</li><li><b>Grounding</b>Hospital operations, community outreach, and applied ML research</li><li><b>Direction</b>District-level field roles toward NHM / CHAI / GIZ programme work</li></ul>
+  </div></div></section>
+
+  <section class="section alt" id="experience"><div class="wrap"><p class="eyebrow">02 / EXPERIENCE</p><h2>Where the work happened.</h2><div class="timeline">
+    {% for item in experience %}<article class="fold-card reveal"><span class="marker"></span><button class="fold-trigger" aria-expanded="false"><div><em>{{ item.date }}</em><h3>{{ item.role }}</h3></div><span class="plus">+</span></button><div class="fold-content"><p>{{ item.summary }}</p><ul>{% for point in item.highlights %}<li>{{ point }}</li>{% endfor %}</ul></div></article>{% endfor %}
+  </div></div></section>
+
+  <section class="section" id="projects"><div class="wrap"><p class="eyebrow">03 / PROJECTS</p><h2>Applied analytics, in health contexts.</h2><div class="project-grid">
+    {% for project in projects %}<article class="fold-card project reveal"><button class="fold-trigger" aria-expanded="false"><div><em>{{ project.type }}</em><h3>{{ project.title }}</h3></div><span class="plus">+</span></button><div class="fold-content"><p>{{ project.summary }}</p><ul>{% for point in project.highlights %}<li>{{ point }}</li>{% endfor %}</ul>{% if project.note %}<p class="note">{{ project.note }}</p>{% endif %}{% if project.report %}<a class="report-link" href="{{ url_for('static', filename=project.report) }}" target="_blank" rel="noopener">View MBA project report ↗</a>{% endif %}</div></article>{% endfor %}
+  </div></div></section>
+
+  <section class="section alt" id="ml"><div class="wrap"><p class="eyebrow">04 / MACHINE LEARNING HUB</p><div class="ml-heading"><div><h2>A working model, not just a skill listed.</h2><p>Breast cancer classification using the Wisconsin dataset, Random Forest, and a Flask prediction API.</p></div><div class="accuracy"><span>569</span><small>DATASET SAMPLES<br>30 FEATURES</small></div></div>
+    <div class="ml-grid"><article class="model-card reveal"><p class="mono">MODEL PROFILE</p><h3>Breast Cancer Classification</h3><dl><div><dt>Dataset</dt><dd>Wisconsin Diagnostic Dataset</dd></div><div><dt>Samples</dt><dd>569</dd></div><div><dt>Features</dt><dd>30 clinical measurements</dd></div></dl><div class="model-tags"><span>Logistic Regression</span><span>Decision Tree</span><span>SVM</span><span class="selected">Random Forest</span></div></article>
+    <form class="demo-card reveal" id="predictionForm"><p class="mono">LIVE PREDICTION / DEMO</p><h3>Try the model</h3><p class="muted">Enter three sample measurements to call the Flask API.</p><label>Mean radius<input name="mean_radius" type="number" step="0.1" value="14.2" required></label><label>Mean texture<input name="mean_texture" type="number" step="0.1" value="20.1" required></label><label>Mean perimeter<input name="mean_perimeter" type="number" step="0.1" value="92.4" required></label><button class="button gold" type="submit">Run prediction <b>→</b></button><output id="predictionResult" aria-live="polite">Ready for a sample input.</output></form></div>
+    <p class="disclaimer">For portfolio and educational demonstration only. This is not medical advice, a clinical decision-support tool, or a diagnostic device.</p>
+  </div></section>
+
+  <section class="section" id="certifications"><div class="wrap"><p class="eyebrow">05 / CREDENTIALS</p><h2>Credentials on record.</h2><div class="cert-grid">{% for cert in certifications %}<article class="cert-card reveal"><div class="cert-stamp">0{{ loop.index }}</div><p class="mono">{{ cert.status }}</p><h3>{{ cert.title }}</h3><span>{{ cert.organization }}</span></article>{% endfor %}</div></div></section>
+
+  <section class="section alt" id="skills"><div class="wrap"><p class="eyebrow">06 / SKILLS</p><h2>The working toolkit.</h2><div class="skills-grid reveal">{% for category, items in skills.items() %}<div><h3>{{ category }}</h3><p>{{ items|join(' · ') }}</p></div>{% endfor %}</div></div></section>
+
+  <section class="section" id="education"><div class="wrap"><p class="eyebrow">07 / EDUCATION</p><h2>Academic record.</h2><div class="education">{% for item in education %}<article class="reveal"><em>{{ item.date }}</em><div><h3>{{ item.degree }}</h3><p>{{ item.institution }}</p></div></article>{% endfor %}</div></div></section>
+
+  <section class="contact" id="contact"><div class="wrap"><p class="eyebrow">08 / CONTACT</p><h2>Let’s talk.</h2><p>Open to public-health programme management, NGO-sector, and field-coordination roles.</p><div class="contact-grid"><a href="mailto:{{ profile.email }}"><small>Email</small>{{ profile.email }}</a><a href="tel:{{ profile.phone|replace(' ', '') }}"><small>Phone</small>{{ profile.phone }}</a><a href="{{ profile.linkedin }}" target="_blank" rel="noreferrer"><small>LinkedIn</small>/in/sunil-kumar-v</a><div><small>Location</small>{{ profile.location }}</div></div></div></section>
+  </main>
+  <footer>{{ profile.name }} <span>·</span> Healthcare & Programme Management <small>© <span id="year"></span></small></footer>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body></html>
