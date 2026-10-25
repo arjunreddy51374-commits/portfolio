@@ -20,9 +20,13 @@
   <main>
   <section class="hero hero-cinematic" id="home">
     <img class="cinematic-artwork" src="{{ url_for('static', filename='images/cinematic-hero-reference.png') }}" alt="A cinematic peacock-green portfolio opening with a luxury car and gold stage details">
-    <p class="hero-specialty">Financial Modeling</p>
-    <a class="enter-world" href="#about"><span>Enter my world</span><b>→</b></a>
-    <div class="hero-accessible-copy"><h1>{{ profile.name }}</h1><p>{{ profile.summary }}</p></div>
+    <div class="hero-content">
+      <p class="hero-welcome">Welcome</p>
+      <h1>{{ profile.name }}</h1>
+      <p class="hero-specialties"><span>Financial Modeling</span><i>·</i>Healthcare Management<i>·</i>Business Analytics</p>
+      <p class="hero-summary">{{ profile.summary }}</p>
+      <a class="enter-world" href="#about"><span>Enter my world</span><b aria-hidden="true">→</b></a>
+    </div>
   </section>
   <div class="journey-transition" id="journeyTransition" aria-hidden="true">
     <div class="journey-haze haze-one"></div><div class="journey-haze haze-two"></div>
