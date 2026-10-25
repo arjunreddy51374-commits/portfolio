@@ -10,6 +10,7 @@ from typing import Any
 from flask import Blueprint, Response, current_app, jsonify, render_template, request
 
 from . import core
+from . import ingestion
 
 
 def create_blueprint(db_path: Path) -> Blueprint:
@@ -71,9 +72,15 @@ def create_blueprint(db_path: Path) -> Blueprint:
     def page():
         return render_template("fip.html")
 
+    @bp.get("/fip/guide")
+    def guide():
+        return render_template("fip_guide.html")
+
     @bp.get("/api/fip/health")
     def health():
-        return jsonify(status="ok", persistence="sqlite", source_retrieval="manual_only",
+        settings = ingestion.get_settings(db_path)
+        return jsonify(status="ok", persistence="sqlite", source_retrieval="configurable",
+                       default_ingestion_mode=settings["global_mode"], ingestion_modes=settings["modes"],
                        formula_catalog_version=core.FORMULA_CATALOG_VERSION, production_ready=False)
 
     @bp.get("/api/fip/metric-catalog")
@@ -179,6 +186,79 @@ def create_blueprint(db_path: Path) -> Blueprint:
         if role is None:
             return jsonify(error="A valid FIP staff token is required."), 401
         return jsonify(role=role, **core.staff_workspace(db_path))
+
+    @bp.get("/api/fip/ingestion/settings")
+    def ingestion_settings():
+        if staff_role() is None:
+            return jsonify(error="A valid FIP staff token is required."), 401
+        return jsonify(ingestion.get_settings(db_path))
+
+    @bp.put("/api/fip/ingestion/settings")
+    def update_ingestion_settings():
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        return respond(ingestion.set_global_mode, db_path, body.get("mode"), "admin")
+
+    @bp.put("/api/fip/sources/<record_id>/ingestion-settings")
+    def update_source_ingestion_settings(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        return respond(ingestion.set_source_settings, db_path, record_id, body, "admin")
+
+    @bp.post("/api/fip/sources/<record_id>/ingestion-settings/approve")
+    def approve_source_ingestion_settings(record_id: str):
+        denied = require_role("reviewer")
+        if denied: return denied
+        reason = decision_reason()
+        if isinstance(reason, tuple): return reason
+        return respond(ingestion.approve_source_config, db_path, record_id, "reviewer", reason)
+
+    @bp.get("/api/fip/ingestion/jobs")
+    def ingestion_jobs():
+        if staff_role() is None:
+            return jsonify(error="A valid FIP staff token is required."), 401
+        return jsonify(jobs=ingestion.list_jobs(db_path))
+
+    @bp.post("/api/fip/ingestion/jobs")
+    def queue_ingestion_job():
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        return respond(ingestion.create_job, db_path, body.get("source_id"), body.get("mode"), "admin")
+
+    @bp.post("/api/fip/ingestion/jobs/<record_id>/run")
+    def run_ingestion_job(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        return respond(ingestion.run_job, db_path, record_id, "admin")
+
+    @bp.post("/api/fip/ingestion/jobs/<record_id>/observations")
+    def add_manual_job_observation(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        observation = body.get("observation")
+        if not isinstance(observation, dict):
+            return jsonify(error="observation must be a JSON object."), 400
+        return respond(ingestion.add_manual_observation, db_path, record_id, observation, "admin")
+
+    @bp.post("/api/fip/ingestion/jobs/<record_id>/corrections")
+    def correct_hybrid_job_exception(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        observation = body.get("observation")
+        if not isinstance(observation, dict):
+            return jsonify(error="observation must be a JSON object."), 400
+        return respond(ingestion.correct_hybrid_exception, db_path, record_id,
+                       body.get("row_number"), observation, "admin")
 
     @bp.get("/api/fip/audit")
     def audit():

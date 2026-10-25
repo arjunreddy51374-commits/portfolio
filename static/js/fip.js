@@ -4,6 +4,7 @@ const notice = document.querySelector('#notice');
 let catalog = null;
 let workspaceData = null;
 let selectedRelease = '';
+let activeIngestionJob = null;
 
 function textNode(parent, tag, value, className = '') {
   const element = document.createElement(tag);
@@ -179,6 +180,14 @@ async function refreshPublic() {
 function fillStaffSelectors(data) {
   const entities = data.entities;
   const sources = data.sources;
+  const selectedIngestionSource = document.querySelector('#ingestion-source').value;
+  const selectedJobSource = document.querySelector('#ingestion-job-source').value;
+  optionList(document.querySelector('#ingestion-source'), sources,
+    item => `${item.title} · ${item.id} · ${item.approval_status}`, item => item.id);
+  optionList(document.querySelector('#ingestion-job-source'), sources,
+    item => `${item.title} · ${item.id}`, item => item.id);
+  if (sources.some(item => item.id === selectedIngestionSource)) document.querySelector('#ingestion-source').value = selectedIngestionSource;
+  if (sources.some(item => item.id === selectedJobSource)) document.querySelector('#ingestion-job-source').value = selectedJobSource;
   optionList(document.querySelector('#observation-entity'), entities,
     item => `${item.canonical_name} · ${item.id} · ${item.review_status}`, item => item.id);
   optionList(document.querySelector('#observation-source'), sources,
@@ -214,6 +223,95 @@ function fillStaffSelectors(data) {
     option.textContent = `${item.canonical_name} · ${item.metric_id} · ${item.period_id} · v${item.version} · ${item.status}`;
     correctionSelect.append(option);
   }
+}
+
+function renderIngestionSettings(settings) {
+  const globalMode = document.querySelector('#global-ingestion-mode');
+  globalMode.value = settings.global_mode;
+  const selectedSource = document.querySelector('#ingestion-source');
+  const sourceId = selectedSource.value;
+  const source = settings.sources.find(item => item.id === sourceId);
+  if (source) {
+    document.querySelector('#source-ingestion-mode').value = source.ingestion_mode || '';
+    document.querySelector('#source-connector-format').value = source.connector_format;
+    document.querySelector('#source-schedule-interval').value = source.schedule_interval_minutes ?? '';
+    document.querySelector('#source-connector-config').value = JSON.stringify(source.connector_config, null, 2);
+    const review = document.querySelector('#connector-review-state');
+    review.textContent = source.connector_format === 'manual_only'
+      ? `Manual-only source · effective mode ${source.ingestion_mode || settings.global_mode}.`
+      : `Connector ${source.ingestion_config_status.toLowerCase()} · source ${source.approval_status.toLowerCase()} · next scheduled run ${source.next_scheduled_at || 'not scheduled'}.`;
+    document.querySelector('#approve-source-connector').disabled = source.ingestion_config_status === 'APPROVED';
+  }
+  renderIngestionJobs(settings.jobs);
+}
+
+function renderIngestionJobs(jobs) {
+  const root = document.querySelector('#ingestion-job-list');
+  root.replaceChildren();
+  if (!jobs.length) {
+    textNode(root, 'p', 'No ingestion jobs yet.', 'muted-text');
+    return;
+  }
+  for (const job of jobs) {
+    const row = document.createElement('article');
+    row.className = 'ingestion-job';
+    const details = document.createElement('div');
+    textNode(details, 'strong', job.source_title || job.source_id);
+    textNode(details, 'small', `${job.id} · ${job.created_at}`);
+    row.append(details);
+    textNode(row, 'span', `${job.mode} · ${job.trigger_type}`);
+    textNode(row, 'span', job.status, `state ingestion-status-${job.status.toLowerCase()}`);
+    textNode(row, 'span', `${job.observations_created} created · ${job.observations_skipped} skipped`);
+    const controls = document.createElement('div');
+    if (job.status === 'QUEUED' && job.mode !== 'MANUAL') {
+      const run = textNode(controls, 'button', 'Run now', 'button action-button');
+      run.type = 'button';
+      run.addEventListener('click', async () => {
+        try {
+          await api(`/api/fip/ingestion/jobs/${job.id}/run`, { method: 'POST', role: 'admin' });
+          setNotice(`Ingestion job ${job.id} finished. Review its status and exceptions below.`, 'success');
+          await refreshWorkspace();
+        } catch (error) { setNotice(error.message, 'error'); }
+      });
+    } else if (job.mode === 'MANUAL' && ['QUEUED', 'AWAITING_REVIEW'].includes(job.status)) {
+      const use = textNode(controls, 'button', 'Use manual entry', 'button action-button');
+      use.type = 'button';
+      use.addEventListener('click', () => {
+        activeIngestionJob = { id: job.id, source_id: job.source_id, mode: job.mode, exceptions: job.exceptions || [] };
+        document.querySelector('#active-ingestion-job').textContent = `Active MANUAL job ${job.id}. Enter observations below and select source ${job.source_id}.`;
+        document.querySelector('#observation-source').value = job.source_id;
+        document.querySelector('#observation-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    } else if (job.mode === 'HYBRID' && job.status === 'AWAITING_REVIEW' && job.exceptions?.some(item => item.status === 'OPEN')) {
+      const correct = textNode(controls, 'button', 'Correct exception', 'button action-button');
+      correct.type = 'button';
+      correct.addEventListener('click', () => {
+        activeIngestionJob = { id: job.id, source_id: job.source_id, mode: job.mode, exceptions: job.exceptions || [] };
+        document.querySelector('#active-ingestion-job').textContent = `Active HYBRID correction for job ${job.id}. Use the observation form below; you will be prompted for the exception row number.`;
+        document.querySelector('#observation-source').value = job.source_id;
+        document.querySelector('#observation-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+    row.append(controls);
+    if (job.error_message) textNode(row, 'p', job.error_message, 'ingestion-job-exceptions');
+    for (const exception of job.exceptions || []) {
+      if (exception.status === 'OPEN') textNode(row, 'p', `Row ${exception.row_number}: ${exception.error}`, 'ingestion-job-exceptions');
+    }
+    root.append(row);
+  }
+}
+
+async function refreshIngestionSettings() {
+  const role = adminToken.value ? 'admin' : 'reviewer';
+  const data = await api('/api/fip/ingestion/settings', { role });
+  renderIngestionSettings(data);
+  return data;
+}
+
+async function refreshIngestionJobs() {
+  const role = adminToken.value ? 'admin' : 'reviewer';
+  const data = await api('/api/fip/ingestion/jobs', { role });
+  renderIngestionJobs(data.jobs);
 }
 
 function nextAction(record) {
@@ -302,6 +400,7 @@ async function refreshWorkspace() {
   workspaceData = data;
   fillStaffSelectors(data);
   renderQueue(data);
+  await refreshIngestionSettings();
   document.querySelector('#workspace-role').textContent = `Staff view · ${data.role}`;
   return data;
 }
@@ -416,6 +515,75 @@ document.querySelector('#load-workspace').addEventListener('click', async () => 
   } catch (error) { setNotice(error.message, 'error'); }
 });
 
+document.querySelector('#ingestion-source').addEventListener('change', async () => {
+  try { await refreshIngestionSettings(); }
+  catch (error) { setNotice(error.message, 'error'); }
+});
+
+document.querySelector('#save-global-ingestion-mode').addEventListener('click', async () => {
+  try {
+    const mode = document.querySelector('#global-ingestion-mode').value;
+    await api('/api/fip/ingestion/settings', { method: 'PUT', role: 'admin', body: { mode } });
+    setNotice(`Global ingestion default saved as ${mode}. No job was started.`, 'success');
+    await refreshIngestionSettings();
+  } catch (error) { setNotice(error.message, 'error'); }
+});
+
+document.querySelector('#save-source-ingestion-settings').addEventListener('click', async () => {
+  const sourceId = document.querySelector('#ingestion-source').value;
+  if (!sourceId) { setNotice('Choose a source first.', 'error'); return; }
+  try {
+    const config = JSON.parse(document.querySelector('#source-connector-config').value || '{}');
+    const rawInterval = document.querySelector('#source-schedule-interval').value;
+    const body = {
+      mode: document.querySelector('#source-ingestion-mode').value || null,
+      connector_format: document.querySelector('#source-connector-format').value,
+      connector_config: config,
+      schedule_interval_minutes: rawInterval === '' ? null : Number(rawInterval),
+    };
+    const saved = await api(`/api/fip/sources/${sourceId}/ingestion-settings`, { method: 'PUT', role: 'admin', body });
+    const approvalNote = saved.ingestion_config_status === 'PENDING_REVIEW' && saved.connector_format !== 'manual_only'
+      ? ' Connector approval is pending; any schedule is paused and must be re-enabled after approval.' : '';
+    setNotice(`Source ingestion settings saved.${approvalNote}`, 'success');
+    await refreshWorkspace();
+  } catch (error) { setNotice(error instanceof SyntaxError ? 'Connector configuration must be valid JSON.' : error.message, 'error'); }
+});
+
+document.querySelector('#approve-source-connector').addEventListener('click', async () => {
+  const sourceId = document.querySelector('#ingestion-source').value;
+  if (!sourceId) { setNotice('Choose a source first.', 'error'); return; }
+  try {
+    const reason = window.prompt('Reason for approving this source connector configuration:');
+    if (reason === null || !reason.trim()) return;
+    await api(`/api/fip/sources/${sourceId}/ingestion-settings/approve`, {
+      method: 'POST', role: 'reviewer', body: { reason: reason.trim() },
+    });
+    setNotice('Source connector approved. Scheduled or on-demand retrieval may now use it.', 'success');
+    await refreshWorkspace();
+  } catch (error) { setNotice(error.message, 'error'); }
+});
+
+document.querySelector('#queue-ingestion-job').addEventListener('click', async () => {
+  const sourceId = document.querySelector('#ingestion-job-source').value;
+  if (!sourceId) { setNotice('Choose a source for the ingestion job.', 'error'); return; }
+  try {
+    const requestedMode = document.querySelector('#ingestion-job-mode').value || null;
+    const job = await api('/api/fip/ingestion/jobs', {
+      method: 'POST', role: 'admin', body: { source_id: sourceId, mode: requestedMode },
+    });
+    if (job.mode === 'MANUAL') {
+      activeIngestionJob = { id: job.id, source_id: job.source_id, mode: job.mode, exceptions: [] };
+      document.querySelector('#active-ingestion-job').textContent = `Active MANUAL job ${job.id}. Enter observations below and select source ${job.source_id}.`;
+      document.querySelector('#observation-source').value = job.source_id;
+      setNotice(`Manual job ${job.id} queued. It will not fetch the source; add figures using the form below.`, 'success');
+    } else {
+      const result = await api(`/api/fip/ingestion/jobs/${job.id}/run`, { method: 'POST', role: 'admin' });
+      setNotice(`${result.mode} job ${result.id}: ${result.status.toLowerCase()} · ${result.observations_created} observations created.`, result.status === 'FAILED' ? 'error' : 'success');
+    }
+    await refreshWorkspace();
+  } catch (error) { setNotice(error.message, 'error'); }
+});
+
 document.querySelector('#entity-form').addEventListener('submit', async event => {
   event.preventDefault();
   try {
@@ -491,11 +659,30 @@ document.querySelector('#observation-form').addEventListener('submit', async eve
   body.metric_id = body.metric_id;
   if (body.domain !== 'government') { body.fiscal_scope = ''; body.budget_stage = ''; }
   try {
-    await api('/api/fip/observations', { method: 'POST', role: 'admin', body });
+    if (activeIngestionJob?.mode === 'MANUAL') {
+      await api(`/api/fip/ingestion/jobs/${activeIngestionJob.id}/observations`, {
+        method: 'POST', role: 'admin', body: { observation: body },
+      });
+    } else if (activeIngestionJob?.mode === 'HYBRID') {
+      const openException = activeIngestionJob.exceptions.find(item => item.status === 'OPEN');
+      const defaultRow = openException?.row_number || '';
+      const rowNumber = Number(window.prompt('Exception row number to correct:', defaultRow));
+      if (!Number.isInteger(rowNumber) || rowNumber < 1) return;
+      await api(`/api/fip/ingestion/jobs/${activeIngestionJob.id}/corrections`, {
+        method: 'POST', role: 'admin', body: { row_number: rowNumber, observation: body },
+      });
+    } else {
+      await api('/api/fip/observations', { method: 'POST', role: 'admin', body });
+    }
     event.currentTarget.reset();
+    if (activeIngestionJob) {
+      const completedMode = activeIngestionJob.mode;
+      activeIngestionJob = null;
+      document.querySelector('#active-ingestion-job').textContent = `Last ${completedMode} record saved. Select the job again for more entries or corrections.`;
+    }
     document.querySelector('#observation-domain').value = 'corporate';
     updateMetricChoices();
-    setNotice('Observation saved as INGESTED with its evidence location.', 'success');
+    setNotice('Observation saved with its ingestion job and evidence lineage. Reviewer validation and approval are still required.', 'success');
     await refreshWorkspace(); await refreshPublic();
   } catch (error) { setNotice(error.message, 'error'); }
 });
@@ -529,3 +716,7 @@ document.querySelector('#run-reconciliation').addEventListener('click', async ()
   try { await loadCatalog(); await refreshPublic(); await refreshReadiness(); }
   catch (error) { setNotice(error.message, 'error'); }
 })();
+
+window.setInterval(() => {
+  if (adminToken.value || reviewerToken.value) refreshIngestionJobs().catch(() => {});
+}, 30_000);

@@ -1,8 +1,8 @@
 """Persistent evidence, review, publication, and calculation services for FIP.
 
-This first release is deliberately manual-entry: it never retrieves a source URL.
-All monetary values use Decimal and every published calculation stores its input
-observation IDs and formula versions.
+Manual entry remains the default. Reviewed Automatic and Hybrid ingestion
+connectors preserve evidence, validation, audit, and reviewer-publication gates.
+All monetary values use Decimal and calculations retain input lineage.
 """
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ REUSE_POLICIES = {"public_display", "link_only", "internal_only"}
 FX_CONVENTIONS = {"period_average", "period_end", "transaction_date", "budget_rate"}
 FRESHNESS_STATES = {"CURRENT", "STALE", "UNKNOWN"}
 PERIOD_TYPES = {"annual", "semi_annual", "quarterly", "monthly", "custom"}
+INGESTION_MODES = {"MANUAL", "AUTOMATIC", "HYBRID"}
 ALIAS_TYPES = {"legal_name", "trading_name", "previous_name", "abbreviation", "registry_name"}
 RELATIONSHIP_TYPES = {"parent_subsidiary", "ownership", "control", "government_hierarchy", "funding", "successor"}
 FRAMEWORKS = {
@@ -227,7 +228,25 @@ def _conn(db_path: Path) -> sqlite3.Connection:
             license_name TEXT NOT NULL, permitted_use TEXT NOT NULL, retention_rule TEXT NOT NULL,
             approval_status TEXT NOT NULL, created_at TEXT NOT NULL,
             owner TEXT NOT NULL DEFAULT '', access_requirements TEXT NOT NULL DEFAULT '',
-            technical_limits TEXT NOT NULL DEFAULT '', failure_policy TEXT NOT NULL DEFAULT ''
+            technical_limits TEXT NOT NULL DEFAULT '', failure_policy TEXT NOT NULL DEFAULT '',
+            ingestion_mode TEXT, connector_format TEXT NOT NULL DEFAULT 'manual_only',
+            connector_config_json TEXT NOT NULL DEFAULT '{}', schedule_interval_minutes INTEGER,
+            next_scheduled_at TEXT, ingestion_config_status TEXT NOT NULL DEFAULT 'PENDING_REVIEW',
+            ingestion_config_approved_by TEXT, ingestion_config_approved_at TEXT
+        );
+        CREATE TABLE IF NOT EXISTS fip_settings (
+            setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL,
+            updated_by TEXT NOT NULL, updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS ingestion_jobs (
+            id TEXT PRIMARY KEY, source_id TEXT NOT NULL REFERENCES sources(id),
+            mode TEXT NOT NULL CHECK(mode IN ('MANUAL','AUTOMATIC','HYBRID')),
+            mode_override TEXT CHECK(mode_override IS NULL OR mode_override IN ('MANUAL','AUTOMATIC','HYBRID')),
+            status TEXT NOT NULL CHECK(status IN ('QUEUED','RUNNING','AWAITING_REVIEW','COMPLETED','FAILED')),
+            trigger_type TEXT NOT NULL, requested_by TEXT NOT NULL, created_at TEXT NOT NULL,
+            started_at TEXT, completed_at TEXT, records_seen INTEGER NOT NULL DEFAULT 0,
+            observations_created INTEGER NOT NULL DEFAULT 0, observations_skipped INTEGER NOT NULL DEFAULT 0,
+            exceptions_json TEXT NOT NULL DEFAULT '[]', error_message TEXT
         );
         CREATE TABLE IF NOT EXISTS fx_rates (
             id TEXT PRIMARY KEY, source_currency TEXT NOT NULL, target_currency TEXT NOT NULL,
@@ -260,7 +279,9 @@ def _conn(db_path: Path) -> sqlite3.Connection:
             fiscal_scope TEXT, budget_stage TEXT, freshness_status TEXT NOT NULL DEFAULT 'UNKNOWN',
             evidence_reference TEXT NOT NULL, extraction_method TEXT NOT NULL,
             version INTEGER NOT NULL DEFAULT 1, supersedes_id TEXT, status TEXT NOT NULL,
-            validation_message TEXT, validation_json TEXT, created_at TEXT NOT NULL
+            validation_message TEXT, validation_json TEXT, created_at TEXT NOT NULL,
+            ingestion_job_id TEXT REFERENCES ingestion_jobs(id), ingestion_mode TEXT,
+            idempotency_key TEXT
         );
         CREATE TABLE IF NOT EXISTS calculation_runs (
             id TEXT PRIMARY KEY, entity_id TEXT NOT NULL REFERENCES entities(id),
@@ -302,9 +323,16 @@ def _conn(db_path: Path) -> sqlite3.Connection:
             ON audit_events(record_type, record_id, id);
     """)
     source_columns = {row["name"] for row in connection.execute("PRAGMA table_info(sources)")}
-    for column in ("owner", "access_requirements", "technical_limits", "failure_policy"):
+    for column, declaration in (
+        ("owner", "TEXT NOT NULL DEFAULT ''"), ("access_requirements", "TEXT NOT NULL DEFAULT ''"),
+        ("technical_limits", "TEXT NOT NULL DEFAULT ''"), ("failure_policy", "TEXT NOT NULL DEFAULT ''"),
+        ("ingestion_mode", "TEXT"), ("connector_format", "TEXT NOT NULL DEFAULT 'manual_only'"),
+        ("connector_config_json", "TEXT NOT NULL DEFAULT '{}'"), ("schedule_interval_minutes", "INTEGER"),
+        ("next_scheduled_at", "TEXT"), ("ingestion_config_status", "TEXT NOT NULL DEFAULT 'PENDING_REVIEW'"),
+        ("ingestion_config_approved_by", "TEXT"), ("ingestion_config_approved_at", "TEXT"),
+    ):
         if column not in source_columns:
-            connection.execute(f"ALTER TABLE sources ADD COLUMN {column} TEXT NOT NULL DEFAULT ''")
+            connection.execute(f"ALTER TABLE sources ADD COLUMN {column} {declaration}")
     observation_columns = {row["name"] for row in connection.execute("PRAGMA table_info(observations)")}
     if "supersedes_id" not in observation_columns:
         connection.execute("ALTER TABLE observations ADD COLUMN supersedes_id TEXT")
@@ -312,6 +340,10 @@ def _conn(db_path: Path) -> sqlite3.Connection:
                                 ("fx_rate_id", "TEXT"), ("conversion_convention", "TEXT"),
                                 ("framework_id", "TEXT"), ("framework_version", "TEXT"),
                                 ("freshness_status", "TEXT"), ("validation_json", "TEXT")):
+        if column not in observation_columns:
+            connection.execute(f"ALTER TABLE observations ADD COLUMN {column} {declaration}")
+    for column, declaration in (("ingestion_job_id", "TEXT REFERENCES ingestion_jobs(id)"),
+                                ("ingestion_mode", "TEXT"), ("idempotency_key", "TEXT")):
         if column not in observation_columns:
             connection.execute(f"ALTER TABLE observations ADD COLUMN {column} {declaration}")
     for row in connection.execute("SELECT id,value_decimal,currency,unit FROM observations WHERE standardized_value_decimal IS NULL OR standardized_currency IS NULL"):
@@ -322,6 +354,9 @@ def _conn(db_path: Path) -> sqlite3.Connection:
     audit_columns = {row["name"] for row in connection.execute("PRAGMA table_info(audit_events)")}
     if "reason" not in audit_columns:
         connection.execute("ALTER TABLE audit_events ADD COLUMN reason TEXT NOT NULL DEFAULT ''")
+    connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS observations_idempotency ON observations(idempotency_key) WHERE idempotency_key IS NOT NULL")
+    connection.execute("CREATE INDEX IF NOT EXISTS ingestion_jobs_status ON ingestion_jobs(status,created_at)")
+    connection.execute("INSERT OR IGNORE INTO fip_settings(setting_key,setting_value,updated_by,updated_at) VALUES('global_ingestion_mode','MANUAL','system',?)", (now_utc(),))
     _seed_registers(connection)
     connection.commit()
     return connection
@@ -407,11 +442,14 @@ def staff_workspace(db_path: Path) -> dict[str, Any]:
         release_gates = [dict(row) for row in db.execute("SELECT * FROM release_gates ORDER BY gate_id")]
         nfr_register = [dict(row) for row in db.execute("SELECT * FROM nfr_register ORDER BY category")]
         audit = [dict(row) for row in db.execute("SELECT * FROM audit_events ORDER BY id DESC LIMIT 80")]
+        ingestion_jobs = [dict(row) for row in db.execute("SELECT * FROM ingestion_jobs ORDER BY created_at DESC LIMIT 50")]
+        ingestion_settings = db.execute("SELECT setting_value,updated_by,updated_at FROM fip_settings WHERE setting_key='global_ingestion_mode'").fetchone()
     return {"entities": entities, "aliases": aliases, "relationships": relationships,
             "metric_mappings": metric_mappings, "sources": sources, "fx_rates": fx_rates,
             "observations": observations, "calculations": calculations,
             "reconciliation_runs": reconciliation_runs, "releases": releases,
-            "release_gates": release_gates, "nfr_register": nfr_register, "audit_events": audit}
+        "release_gates": release_gates, "nfr_register": nfr_register, "audit_events": audit,
+        "ingestion_jobs": ingestion_jobs, "global_ingestion_mode": ingestion_settings["setting_value"] if ingestion_settings else "MANUAL"}
 
 
 def create_entity(db_path: Path, payload: dict[str, Any], role: str) -> dict[str, Any]:
@@ -658,7 +696,8 @@ def approve_fx_rate(db_path: Path, record_id: str, role: str, reason: str) -> di
         return after
 
 
-def create_observation(db_path: Path, payload: dict[str, Any], role: str) -> dict[str, Any]:
+def create_observation(db_path: Path, payload: dict[str, Any], role: str,
+                       workflow: dict[str, Any] | None = None) -> dict[str, Any]:
     domain = payload.get("domain")
     if domain == "corporate":
         metrics = CORPORATE_METRICS
@@ -738,9 +777,13 @@ def create_observation(db_path: Path, payload: dict[str, Any], role: str) -> dic
         "framework_id": framework_id, "framework_version": framework_version,
         "fiscal_scope": fiscal_scope, "budget_stage": budget_stage, "freshness_status": freshness_status,
         "evidence_reference": _required_text(payload.get("evidence_reference"), "evidence_reference", 300),
-        "extraction_method": "manual_transcription", "version": version, "supersedes_id": supersedes_id,
+        "extraction_method": (workflow or {}).get("extraction_method", "manual_transcription"),
+        "version": version, "supersedes_id": supersedes_id,
         "status": "INGESTED",
         "validation_message": None, "validation_json": None, "created_at": now_utc(),
+        "ingestion_job_id": (workflow or {}).get("job_id"),
+        "ingestion_mode": (workflow or {}).get("mode"),
+        "idempotency_key": (workflow or {}).get("idempotency_key"),
     }
     with _conn(db_path) as db:
         entity = db.execute("SELECT * FROM entities WHERE id=?", (record["entity_id"],)).fetchone()
@@ -764,8 +807,20 @@ def create_observation(db_path: Path, payload: dict[str, Any], role: str) -> dic
                                 entity["jurisdiction_code"], start, end)).fetchall()
             if {item["metric_id"] for item in mappings} != {metric_id}:
                 raise FIPError("This source label has no verified mapping for the entity's jurisdiction and reporting framework.")
-        if db.execute("SELECT 1 FROM sources WHERE id=?", (record["source_id"],)).fetchone() is None:
+        source = db.execute("SELECT * FROM sources WHERE id=?", (record["source_id"],)).fetchone()
+        if source is None:
             raise FIPError("source_id was not found.")
+        if workflow:
+            if workflow.get("mode") not in INGESTION_MODES:
+                raise FIPError("The ingestion mode is invalid.")
+            job = db.execute("SELECT source_id,mode FROM ingestion_jobs WHERE id=?", (workflow.get("job_id"),)).fetchone()
+            if job is None or job["source_id"] != record["source_id"] or job["mode"] != workflow["mode"]:
+                raise FIPError("The ingestion job does not match this observation's source and mode.")
+        else:
+            global_mode = db.execute("SELECT setting_value FROM fip_settings WHERE setting_key='global_ingestion_mode'").fetchone()
+            effective_mode = source["ingestion_mode"] or (global_mode["setting_value"] if global_mode else "MANUAL")
+            if effective_mode != "MANUAL":
+                raise FIPError(f"This source uses {effective_mode} mode. Create an ingestion job and use its workflow, or select a MANUAL job override.")
         if not supersedes_id and db.execute("""SELECT 1 FROM observations WHERE source_id=? AND entity_id=?
                                                 AND period_id=? AND metric_id=? AND evidence_reference=? LIMIT 1""",
                                             (record["source_id"], record["entity_id"], record["period_id"],
@@ -777,7 +832,9 @@ def create_observation(db_path: Path, payload: dict[str, Any], role: str) -> dic
             db.execute(f"INSERT INTO observations({columns}) VALUES({placeholders})", tuple(record.values()))
         except sqlite3.IntegrityError:
             raise FIPError("The observation references a record that does not exist or conflicts with another record.") from None
-        _audit(db, role, "OBSERVATION_INGESTED", "observation", record["id"], after=record)
+        _audit(db, role, "OBSERVATION_INGESTED", "observation", record["id"], after=record,
+               reason=(f"Ingested through {record['ingestion_mode']} job {record['ingestion_job_id']} ({record['extraction_method']})."
+                       if workflow else "Manual evidence entry."))
     return record
 
 
@@ -899,6 +956,19 @@ def publish_observation(db_path: Path, record_id: str, role: str, reason: str) -
         db.execute("UPDATE observations SET status='PUBLISHED' WHERE id=?", (record_id,))
         after = {"id": record_id, "status": "PUBLISHED", "version": record["version"], "supersedes_id": record["supersedes_id"]}
         _audit(db, role, "OBSERVATION_PUBLISHED", "observation", record_id, before, after, reason)
+        job_id = record.get("ingestion_job_id")
+        if job_id:
+            job = db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone()
+            if job is not None and job["status"] == "AWAITING_REVIEW":
+                pending = db.execute("SELECT 1 FROM observations WHERE ingestion_job_id=? AND status NOT IN ('PUBLISHED','SUPERSEDED','REJECTED','ARCHIVED') LIMIT 1", (job_id,)).fetchone()
+                open_exception = any(item.get("status") == "OPEN" for item in json.loads(job["exceptions_json"]))
+                if pending is None and not open_exception:
+                    before_job = dict(job)
+                    db.execute("UPDATE ingestion_jobs SET status='COMPLETED',completed_at=? WHERE id=?", (now_utc(), job_id))
+                    after_job = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+                    _audit(db, role, "INGESTION_JOB_REVIEW_COMPLETED", "ingestion_job", job_id,
+                           before=before_job, after=after_job,
+                           reason="All observations from the job completed reviewer publication and no exceptions remain open.")
         return {**record, **after}
 
 

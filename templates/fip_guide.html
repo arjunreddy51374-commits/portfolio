@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A practical guide to investigating financial information and tracing FIP results to their evidence.">
+  <title>How to use FIP · Financial Intelligence Platform</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-guide.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to guide</a>
+  <header class="topbar">
+    <a class="brand" href="/fip"><span class="brand-mark">F</span><span>FIP<small>FINANCIAL INTELLIGENCE PLATFORM</small></span></a>
+    <nav aria-label="Main navigation"><a href="/fip">Platform</a><a aria-current="page" aria-label="How to use FIP" href="/fip/guide">Guide</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
+  </header>
+  <main id="main" class="shell guide-shell">
+    <section class="guide-hero">
+      <div>
+        <p class="eyebrow">FIP USER GUIDE · RELEASE 1</p>
+        <h1>From financial data to <em>evidence-backed intelligence.</em></h1>
+        <p class="lede">Use FIP to investigate financial performance, review reported figures, and follow calculations back to their sources.</p>
+        <a class="button primary" href="/fip">Open the FIP platform <span aria-hidden="true">→</span></a>
+      </div>
+      <aside class="guide-callout"><strong>Know what this release can do</strong><p>FIP supports Manual, Automatic, and Hybrid ingestion jobs. Automatic retrieval is limited to reviewer-approved public CSV/JSON connectors; every extracted fact remains subject to validation and human approval. Dedicated company or government explorer screens and comparison dashboards are not included yet.</p></aside>
+    </section>
+
+    <nav class="guide-index" aria-label="Guide sections">
+      <p class="eyebrow">IN THIS GUIDE</p>
+      <div class="guide-index-links">
+        <a href="#first-analysis">Your first analysis</a><a href="#corporate">Corporate analysis</a><a href="#government">Government budgets</a><a href="#comparison">Compare companies</a><a href="#warning">Investigate a warning</a><a href="#statuses">Statuses</a><a href="#evidence">Trace a number</a><a href="#limitations">Limitations</a>
+      </div>
+    </nav>
+
+    <section id="first-analysis" class="guide-section">
+      <p class="eyebrow">01 / GET STARTED</p><h2>Your first analysis in six steps</h2>
+      <ol class="step-list">
+        <li><div><h3>Choose a starting point and ingestion mode</h3><p>Open the <a href="/fip#approved-data">published financial facts</a> to review approved data, or use the <a href="/fip#staff-workspace">controlled workspace</a> if you have authorized staff tokens. New jobs default to <strong>Manual</strong>. Choose <strong>Automatic</strong> for a reviewed CSV/JSON connector, or <strong>Both / Hybrid</strong> to automate retrieval and validation while allowing corrections for exceptions. Save the mode, then queue a job separately; changing a setting does not start ingestion.</p></div></li>
+        <li><div><h3>Select an entity and reporting period</h3><p>Use the entity, period, and basis shown with each fact. Distinguish consolidated statements from standalone statements. For example, a study of Fortis Healthcare for FY2024–25 must state which statement basis it uses.</p></div></li>
+        <li><div><h3>Inspect the reported figure</h3><p>Check the source publisher, reporting period, original value, currency, unit, evidence reference, and validation status. Open the source document or official dataset through its recorded source URL when available.</p></div></li>
+        <li><div><h3>Review the calculation</h3><p>Choose a supported metric and check its definition, required inputs, formula version, periods, and units. FIP preserves the reported figures and the calculation lineage used to derive a result.</p><div class="formula-example"><strong>Illustrative revenue growth</strong><span>Prior-year revenue: ₹800 crore · Current-year revenue: ₹1,000 crore</span><code>((₹1,000 crore − ₹800 crore) ÷ ₹800 crore) × 100 = 25%</code><small>Example only; this is not a reported result for Fortis Healthcare or any other company.</small></div></div></li>
+        <li><div><h3>Investigate the result</h3><p>Ask what changed, which figures support the result, whether periods are comparable, and whether source or validation warnings remain. Treat interpretations that need more evidence as open questions, not findings.</p></div></li>
+        <li><div><h3>Review, compare, and export</h3><p>Confirm the record is approved and published before treating it as part of the public dataset. Use the platform’s Excel, CSV, or Power BI JSON exports when available. Preserve the metric definition, reporting period, and lineage when sharing a result.</p></div></li>
+      </ol>
+    </section>
+
+    <div class="guide-columns">
+      <section id="corporate" class="guide-section guide-card">
+        <p class="eyebrow">02 / COMPANY FINANCIALS</p><h2>Corporate financial analysis</h2>
+        <p><strong>Question:</strong> Is a company’s financial performance improving?</p>
+        <ol><li>Find the company’s approved published facts.</li><li>Choose the reporting year and statement basis.</li><li>Review revenue, profit, assets, liabilities, and cash flow.</li><li>Inspect available growth, margin, liquidity, and cash-flow calculations.</li><li>Open each fact’s evidence and note warnings across periods.</li></ol>
+        <div class="guide-note"><strong>Interpret carefully</strong><p>Higher reported profit alongside lower operating cash flow may warrant a closer look at receivables, working capital, and non-cash items. It does not by itself prove financial distress or manipulation.</p></div>
+        <p class="expected"><strong>Outcome:</strong> A structured view of traceable figures, reproducible calculations, and questions for further research.</p>
+      </section>
+
+      <section id="government" class="guide-section guide-card">
+        <p class="eyebrow">03 / PUBLIC FINANCE</p><h2>Government budget analysis</h2>
+        <p><strong>Question:</strong> How do public receipts and spending compare?</p>
+        <ol><li>Find approved facts for the government or jurisdiction.</li><li>Check fiscal year, budget stage, and institutional scope.</li><li>Review revenue receipts, expenditure, capital spending, and fiscal indicators.</li><li>Compare estimates with actuals only when definitions and coverage match.</li><li>Verify the figures against the official budget or fiscal report.</li></ol>
+        <div class="formula-example"><strong>Illustrative revenue deficit</strong><span>Revenue expenditure: ₹460 crore · Revenue receipts: ₹400 crore</span><code>₹460 crore − ₹400 crore = ₹60 crore</code><small>Example only. Follow the applicable reporting framework for official definitions and adjustments.</small></div>
+        <p class="expected"><strong>Outcome:</strong> A transparent analysis of fiscal figures, budget execution, and reporting limits.</p>
+      </section>
+
+      <section id="comparison" class="guide-section guide-card">
+        <p class="eyebrow">04 / COMPARABILITY</p><h2>Compare two companies</h2>
+        <p>Compare revenue growth, operating margin, liquidity, debt burden, operating cash flow, and working-capital efficiency when the required published inputs are available.</p>
+        <div class="guide-note"><strong>Before comparing</strong><p>Check that both companies use compatible reporting periods, accounting definitions, currencies, units, and statement bases. A higher margin alone does not make a company a better investment; valuation, business risk, and sector conditions also matter.</p></div>
+        <p class="expected"><strong>Outcome:</strong> A comparable scorecard with source evidence and methodology visible. This release does not provide a dedicated comparison dashboard, so comparisons may need to be assembled from the available facts and exports.</p>
+      </section>
+
+      <section id="warning" class="guide-section guide-card">
+        <p class="eyebrow">05 / FOLLOW THE EVIDENCE</p><h2>Investigate a financial warning</h2>
+        <ol><li>Open the flagged calculation or record in the review workspace.</li><li>Check the relevant figures, periods, and source statements.</li><li>Look for disclosed explanations such as borrowing, acquisitions, or lease liabilities.</li><li>Review related cash flow and interest coverage where available.</li><li>Record the evidence and any unresolved questions.</li></ol>
+        <p class="expected"><strong>Outcome:</strong> An evidence-linked investigation signal, not an unsupported declaration that a company is unsafe or in distress.</p>
+      </section>
+    </div>
+
+    <section id="statuses" class="guide-section">
+      <p class="eyebrow">06 / RECORD LIFECYCLE</p><h2>Understand data and calculation statuses</h2>
+      <div class="table-wrap"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody>
+        <tr><td><span class="guide-status approved">Approved</span></td><td>The applicable review requirements passed. Approval is required before eligible records can be published.</td></tr>
+        <tr><td><span class="guide-status published">Published</span></td><td>An authorized reviewer published the record. Approved release snapshots expose eligible published facts.</td></tr>
+        <tr><td><span class="guide-status review">Needs Review</span></td><td>An identity, mapping, or other review issue needs investigation before the record can proceed.</td></tr>
+        <tr><td><span class="guide-status failed">Validation Failed</span></td><td>One or more required checks failed. Do not treat the figure as a valid published result.</td></tr>
+        <tr><td><span class="guide-status superseded">Superseded</span></td><td>A newer approved version replaces the earlier record; the earlier version remains in its history.</td></tr>
+        <tr><td><span class="guide-status review">Missing input</span></td><td>A required figure is unavailable. A calculation that depends on it cannot be completed.</td></tr>
+        <tr><td><span class="guide-status failed">Unit or period mismatch</span></td><td>The inputs are not comparable as provided. Check their units, dates, reporting periods, and basis.</td></tr>
+        <tr><td><span class="guide-status failed">Reconciliation failed</span></td><td>A financial integrity check did not reconcile. Investigate the source figures and definitions.</td></tr>
+      </tbody></table></div>
+      <p class="guide-footnote">Some calculation issues are shown as validation or review details rather than as standalone lifecycle statuses. Read the record’s checks and warnings for the exact result.</p>
+    </section>
+
+    <section id="evidence" class="guide-section">
+      <p class="eyebrow">07 / SOURCE LINEAGE</p><h2>Where does each number come from?</h2>
+      <p>For every reported fact or derived result, check:</p>
+      <ul class="evidence-list"><li>Who published the information?</li><li>Which document or dataset contains the figure?</li><li>Which page, table, field, or record supports it?</li><li>Which reporting period, currency, and unit apply?</li><li>Which validation checks were performed?</li><li>Which formula and version produced a calculated result?</li><li>Has the record been reviewed and published?</li></ul>
+      <p class="guide-principle">A published result should trace back to its evidence, and its calculation should be reproducible.</p>
+    </section>
+
+    <section id="limitations" class="guide-section guide-limitations">
+      <p class="eyebrow">08 / USE WITH CARE</p><h2>Important limitations</h2>
+      <p>FIP supports financial research and analysis. It does not guarantee investment returns or replace professional financial, legal, or accounting advice.</p>
+      <p>Public-source data may be incomplete, delayed, revised, or subject to reuse restrictions. Not every metric is available for every entity or jurisdiction. Automatic retrieval supports configured CSV and JSON sources only; it does not extract figures from PDF reports or independently verify a source document’s meaning. Scheduled jobs require the separate FIP scheduler worker to run against the same database.</p>
+      <p>Keep forecasts, interpretations, and investment recommendations distinct from reported facts and calculated historical metrics.</p>
+    </section>
+
+    <section class="guide-start"><div><p class="eyebrow">YOUR NEXT STEP</p><h2>Choose an entity. Inspect the evidence. Review the calculation.</h2></div><a class="button primary" href="/fip">Start in FIP <span aria-hidden="true">→</span></a></section>
+    <footer class="footer"><a href="/fip">← Back to FIP</a><span>FIP Enterprise v2.1 · Release 1 foundation</span></footer>
+  </main>
+</body>
+</html>

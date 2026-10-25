@@ -32,6 +32,10 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 ## FIP Release 1 prototype
 
 - `GET /fip` opens the persistent financial-intelligence workspace. Its local SQLite database is created at `instance/fip.sqlite3` on the first data request and is excluded from version control.
+- The ingestion default is persisted as `MANUAL`; global, per-source, and per-job choices accept exactly `MANUAL`, `AUTOMATIC`, or `HYBRID`. Saving a mode does not start a job. Per-source connector configuration must be approved by a reviewer after the source itself is approved for public display.
+- Automatic and Hybrid jobs fetch only configured HTTPS CSV or JSON connectors, with a 5 MiB / 10,000-row limit, public-host checks, and a stable idempotency key. Automatic metric resolution accepts canonical catalogue labels or verified source-scoped mappings. Extracted records receive structural validation and stay unpublished; reviewer validation/approval and release approval still govern public output. Hybrid jobs additionally allow corrections for row exceptions.
+- Per-source schedules are opt-in. Run `python -m fip.scheduler` as a worker on the same host and shared persistent volume as the web service; configure `FIP_SCHEDULER_POLL_SECONDS` to adjust polling (minimum five seconds). A remote worker with its own local SQLite file cannot share the website's jobs. A source must have an approved connector, an Automatic/Hybrid effective mode, and an interval before the worker queues it.
+- The audit log records the actor role, mode, job, extraction method, and observation lineage. FIP uses shared admin/reviewer tokens, so the current authentication model identifies the role but not an individual staff account.
 - Configure independent admin and reviewer tokens before staff operations:
 
   ```bash
@@ -46,7 +50,7 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 - The Release 1 formula catalogue remains bounded: CAGR, ROIC, working-capital days, debt/GDP, budget execution and budget-stage variance need additional approved inputs and definitions before they can be calculated safely.
 - Public Web data comes from the latest separately approved immutable release snapshot. `GET /api/fip/delivery/excel.xlsx` creates a native Excel report with Dashboard, Controls, Corporate, Government, Statements, Engine, Raw Data, Standardized Data, Source Register, FX Rates and release-audit tabs. Exact decimal values stay as text so Excel cannot silently round them. The workbook exposes the canonical calculation results and lineage; it does not independently recalculate them. `GET /api/fip/delivery/excel.csv` provides a flat export, and `GET /api/fip/delivery/powerbi` exposes release-versioned JSON. All delivery routes support `?release_id=...` for an earlier approved snapshot.
 - `GET /api/fip/readiness` reports architecture, prototype, release-gate and NFR evidence separately. Gates begin pending, so the app does not claim production readiness. Reviewer evidence can be added in the readiness register.
-- This local build does not fetch source URLs, extract documents, resolve external entity identifiers, provide a native `.xlsx` model or `.pbix` package, use hosted PostgreSQL/object storage, or demonstrate production security, backup/recovery, performance and deployment. Forecasting, valuation, AI research and commercial features remain deferred releases.
+- This local build does not extract financial figures from PDFs, resolve external entity identifiers, provide a native `.xlsx` model or `.pbix` package, use hosted PostgreSQL/object storage, or demonstrate production security, backup/recovery, performance and deployment. Forecasting, valuation, AI research and commercial features remain deferred releases.
 - `GET /finance` remains a separate stateless calculator for unsaved analysis.
 
 ## Financial calculation workspace
@@ -66,7 +70,7 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 
 ## Testing
 
-Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, FIP identity/evidence/calculation/reconciliation/release workflows, CSV/Power BI/Excel delivery, API behavior, and explicit multimodal unavailability.
+Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, FIP identity/evidence/calculation/reconciliation/release workflows, Manual/Automatic/Hybrid ingestion, access control, connector approval, idempotency, hybrid corrections, schedules, CSV/Power BI/Excel delivery, API behavior, and explicit multimodal unavailability.
 
 ## Optional mammography training
 

@@ -7,20 +7,21 @@
   <title>FIP · Evidence-based Financial Intelligence</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fip.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-audit.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-ingestion.css') }}">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to FIP workspace</a>
   <header class="topbar">
     <a class="brand" href="/fip"><span class="brand-mark">F</span><span>FIP<small>FINANCIAL INTELLIGENCE PLATFORM</small></span></a>
-    <nav aria-label="Main navigation"><a aria-current="page" href="/fip">Platform</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
+    <nav aria-label="Main navigation"><a aria-current="page" href="/fip">Platform</a><a aria-label="How to use FIP" href="/fip/guide">Guide</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
   </header>
   <main id="main" class="shell">
     <section class="hero">
       <div><p class="eyebrow">RELEASE 1 · LOCAL PROTOTYPE</p><h1>Financial facts,<br><em>with evidence attached.</em></h1>
-        <p class="lede">Register a source and entity, capture a reported observation, validate it, and publish only after review. Corporate and government calculations keep their inputs and formula versions.</p>
-        <div class="chips"><span>Decimal values</span><span>Review-gated publishing</span><span>SQLite lineage</span></div>
+        <p class="lede">Choose Manual, Automatic, or Hybrid ingestion. Capture or retrieve evidence, validate each reported figure, and publish only after review. Corporate and government calculations retain their inputs and formula versions.</p>
+        <div class="chips"><span>Selectable ingestion modes</span><span>Review-gated publishing</span><span>SQLite lineage</span></div>
       </div>
-      <aside class="readiness"><span class="readiness-dot"></span><div><strong>Prototype · manual evidence entry</strong><p>No source is fetched or verified automatically. Production readiness is not claimed.</p></div></aside>
+      <aside class="readiness"><span class="readiness-dot"></span><div><strong>Configurable · Manual, Automatic, or Hybrid</strong><p>Automatic retrieval requires an approved public source and reviewed CSV/JSON connector. Results still require human approval.</p></div></aside>
     </section>
 
     <section class="stat-grid" aria-label="Platform record counts">
@@ -30,7 +31,7 @@
       <article class="stat-card"><span>Published facts</span><strong id="count-published">—</strong></article>
     </section>
 
-    <section class="section-block public-block">
+    <section id="approved-data" class="section-block public-block">
       <div class="section-heading"><div><p class="eyebrow">01 / APPROVED DATASET</p><h2>Published financial facts</h2></div><div class="button-group"><button id="prepare-release" class="button secondary" type="button">Prepare release snapshot</button><a id="excel-export" class="button quiet" href="/api/fip/delivery/excel.xlsx">Excel workbook</a><a id="csv-export" class="button quiet" href="/api/fip/delivery/excel.csv">CSV</a><a id="powerbi-export" class="button quiet" href="/api/fip/delivery/powerbi">Power BI JSON</a><button id="refresh-public" class="button quiet" type="button">Refresh</button></div></div>
       <div class="release-history"><label for="release-select">Approved release history</label><select id="release-select"><option value="">Latest approved release</option></select><button id="open-release" class="button quiet" type="button">Open selected</button></div>
       <p id="release-summary" class="release-summary">No approved release snapshot yet. Individually published records remain outside the public dataset until a release is approved.</p>
@@ -39,7 +40,7 @@
       <div id="public-calculations" class="calculation-feed"></div>
     </section>
 
-    <section class="section-block staff-block">
+    <section id="staff-workspace" class="section-block staff-block">
       <div class="section-heading"><div><p class="eyebrow">02 / CONTROLLED WORKSPACE</p><h2>Capture, review, calculate</h2></div><span class="secure-label">Staff tokens stay in this tab only</span></div>
       <p class="section-note">The admin token registers records and starts calculations. The reviewer token verifies identity, approves sources, validates observations, and publishes. Set both tokens on the server before use.</p>
       <div class="token-row">
@@ -48,6 +49,36 @@
         <button id="load-workspace" class="button secondary" type="button">Load staff workspace</button>
       </div>
       <p id="notice" class="notice" role="status" aria-live="polite">Configure tokens to begin. This page does not store them after you close it.</p>
+
+      <section class="ingestion-panel" aria-labelledby="ingestion-title">
+        <div class="section-heading"><div><p class="eyebrow">02A / INGESTION CONTROL</p><h3 id="ingestion-title">Data Ingestion Settings</h3></div><span class="secure-label">Settings persist in SQLite</span></div>
+        <p class="section-note">Choose the default for new jobs. Manual remains the default until an administrator changes it. Saving a mode never starts an ingestion job.</p>
+        <div class="ingestion-mode-grid">
+          <label>Global default mode<select id="global-ingestion-mode"><option value="MANUAL">Manual</option><option value="AUTOMATIC">Automatic</option><option value="HYBRID">Both / Hybrid</option></select></label>
+          <button id="save-global-ingestion-mode" class="button secondary" type="button">Save global default</button>
+          <p class="hybrid-recommendation"><strong>Both / Hybrid · recommended</strong><br>Automate routine retrieval, extraction, mapping, and validation; let staff correct exceptions and approve publication.</p>
+        </div>
+        <p class="small-note">Automatic mode never bypasses source-use restrictions, evidence checks, validation, or required human approval. This settings preview does not start a job.</p>
+
+        <div class="ingestion-source-grid">
+          <label>Source to configure<select id="ingestion-source"><option value="">Load staff workspace first</option></select></label>
+          <label>Source mode override<select id="source-ingestion-mode"><option value="">Inherit current default</option><option value="MANUAL">Manual</option><option value="AUTOMATIC">Automatic</option><option value="HYBRID">Both / Hybrid</option></select></label>
+          <label>Connector format<select id="source-connector-format"><option value="manual_only">Manual only</option><option value="csv">CSV</option><option value="json">JSON</option></select></label>
+          <label>Schedule interval in minutes<input id="source-schedule-interval" type="number" min="1" max="525600" placeholder="Blank disables scheduling"></label>
+          <label class="connector-config-label">Connector field map and defaults<textarea id="source-connector-config" rows="7" spellcheck="false" placeholder='{"field_map":{"entity_id":"entity_id","domain":"domain","reported_label":"metric","value":"amount","currency":"currency","unit":"unit","period_id":"period","period_start":"period_start","period_end":"period_end","period_type":"period_type","reporting_basis":"basis","framework_id":"framework","framework_version":"framework_version"},"defaults":{"freshness_status":"UNKNOWN"},"idempotency_field":"record_id"}'></textarea></label>
+          <p class="small-note connector-help">For CSV, field-map values are column names; for JSON, use dot paths such as <code>data.items.amount</code>. Defaults fill fields that are constant for the source. Non-canonical reported labels require a verified source-scoped metric mapping.</p>
+          <div class="ingestion-source-actions"><button id="save-source-ingestion-settings" class="button secondary" type="button">Save source settings</button><button id="approve-source-connector" class="button quiet" type="button">Reviewer: approve connector</button></div>
+          <p id="connector-review-state" class="small-note">Connector changes require reviewer approval before automatic retrieval can use them.</p>
+        </div>
+
+        <div class="ingestion-run-row">
+          <label>Start job for source<select id="ingestion-job-source"><option value="">Choose a source</option></select></label>
+          <label>Per-job mode override<select id="ingestion-job-mode"><option value="">Use global/source mode</option><option value="MANUAL">Manual</option><option value="AUTOMATIC">Automatic</option><option value="HYBRID">Both / Hybrid</option></select></label>
+          <button id="queue-ingestion-job" class="button primary" type="button">Queue ingestion job</button>
+        </div>
+        <p id="active-ingestion-job" class="ingestion-active-job" role="status">No active manual ingestion job.</p>
+        <div id="ingestion-job-list" class="ingestion-job-list"><p class="muted-text">Load the staff workspace to see ingestion jobs.</p></div>
+      </section>
 
       <div class="work-grid">
         <form id="entity-form" class="form-card">
