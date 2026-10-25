@@ -33,7 +33,8 @@ document.querySelectorAll('.fold-trigger').forEach(trigger => trigger.addEventLi
 const observer = new IntersectionObserver(entries => entries.forEach(entry => { if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)} }), {threshold:.12});
 document.querySelectorAll('.reveal').forEach(item => observer.observe(item));
 document.querySelector('#year').textContent = new Date().getFullYear();
-document.querySelector('#predictionForm').addEventListener('submit', async event => {
+const legacyPredictionForm = document.querySelector('#predictionForm');
+if (legacyPredictionForm) legacyPredictionForm.addEventListener('submit', async event => {
   event.preventDefault(); const result = document.querySelector('#predictionResult'); const form = new FormData(event.currentTarget);
   result.textContent = 'Running the model…';
   try { const response = await fetch('/api/predict', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(form))}); const data = await response.json(); if(!response.ok) throw new Error(data.error); result.innerHTML = `<strong>${data.classification}</strong> · ${data.probability}% confidence<br>${data.disclaimer}`; } catch(error) { result.textContent = error.message; }

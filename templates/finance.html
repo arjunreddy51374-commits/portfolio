@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Source-attributed financial analysis workspace. Calculations are transparent, stateless, and require human review before publication.">
+  <title>Financial Intelligence · Sunilkumar Vajjiram</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/finance.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to financial analysis</a>
+  <header class="finance-header">
+    <a class="finance-brand" href="/" aria-label="Return to portfolio"><span>SV</span><div>FINANCIAL INTELLIGENCE<small>Research workspace</small></div></a>
+    <nav aria-label="Main navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a aria-current="page" href="/finance">Finance</a><a href="/dashboard">ML research</a><a href="/#contact">Contact</a></nav>
+  </header>
+  <main id="main" class="finance-shell">
+    <section class="finance-hero">
+      <p class="eyebrow">FINANCIAL INTELLIGENCE / 01</p>
+      <h1>Numbers, with their<br><span>sources attached.</span></h1>
+      <p>Explore standard financial statement metrics from figures you enter. Each result includes its formula, inputs, reporting period, units, and source reference.</p>
+      <div class="hero-badges"><span>Decimal arithmetic</span><span>Source attributed</span><span>Not saved</span></div>
+    </section>
+
+    <section class="finance-grid" aria-label="Financial analysis workspace">
+      <form id="finance-form" class="finance-panel" novalidate>
+        <div class="panel-heading"><div><p class="eyebrow">01 / SOURCE & INPUTS</p><h2>Enter statement values</h2></div><span class="status-pill">Draft · unreviewed</span></div>
+        <p class="panel-intro">Manually transcribe figures from an original company filing or other verifiable source. This tool does not retrieve or validate the source document.</p>
+        <fieldset class="finance-fieldset"><legend>Source context</legend>
+          <label>Source document URL<input name="source_url" type="url" placeholder="https://..." autocomplete="url" required></label>
+          <div class="field-pair"><label>Reporting period<input name="period" placeholder="FY2025 or 2025-Q1" required></label><label>Publication date <span>(if known)</span><input name="publication_date" type="date"></label></div>
+          <div class="field-pair"><label>Currency code<input name="currency" value="INR" maxlength="3" pattern="[A-Z]{3}" required></label><label>Source figures are in<select name="unit" required><option value="ones">Ones</option><option value="thousands">Thousands</option><option value="millions" selected>Millions</option><option value="billions">Billions</option></select></label></div>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Income statement</legend><p>Enter amounts using the selected currency and unit. Negative profit values are allowed.</p>
+          <div class="field-pair"><label>Revenue<input name="revenue" type="number" step="any" inputmode="decimal"></label><label>Prior-period revenue<input name="prior_revenue" type="number" step="any" inputmode="decimal"></label></div>
+          <label>Prior revenue reporting period <span>(required when prior-period revenue is supplied)</span><input name="prior_period" placeholder="FY2024 or 2024-Q1"></label>
+          <div class="field-pair"><label>Gross profit<input name="gross_profit" type="number" step="any" inputmode="decimal"></label><label>Operating profit<input name="operating_profit" type="number" step="any" inputmode="decimal"></label></div>
+          <label>Net income / profit after tax<input name="net_income" type="number" step="any" inputmode="decimal"></label>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Balance sheet</legend><div class="field-pair"><label>Current assets<input name="current_assets" type="number" step="any" inputmode="decimal"></label><label>Current liabilities<input name="current_liabilities" type="number" step="any" inputmode="decimal"></label></div>
+          <div class="field-pair"><label>Inventory<input name="inventory" type="number" step="any" inputmode="decimal"></label><label>Total debt<input name="total_debt" type="number" step="any" inputmode="decimal"></label></div>
+          <label>Total equity<input name="total_equity" type="number" step="any" inputmode="decimal"></label>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Cash-flow statement</legend><div class="field-pair"><label>Operating cash flow<input name="operating_cash_flow" type="number" step="any" inputmode="decimal"></label><label>Investing cash flow<input name="investing_cash_flow" type="number" step="any" inputmode="decimal"></label></div>
+          <label>Financing cash flow<input name="financing_cash_flow" type="number" step="any" inputmode="decimal"></label>
+        </fieldset>
+        <div class="form-actions"><button class="button-primary" type="submit"><span class="button-text">Calculate metrics</span><span class="spinner" aria-hidden="true"></span></button><button class="button-secondary" type="reset">Clear form</button></div>
+        <p class="privacy-note">Values are processed for this request only. This prototype does not save your inputs. Do not enter confidential or personally identifiable information.</p>
+      </form>
+
+      <section class="results-column" aria-label="Calculation output">
+        <div id="finance-empty" class="finance-panel empty-state"><span class="empty-mark">Σ</span><p class="eyebrow">AWAITING INPUT</p><h2>Analysis appears here</h2><p>Enter a source URL, reporting period, currency, unit, and the figures you want to analyze. Metrics with incomplete inputs will be marked unavailable rather than guessed.</p></div>
+        <div id="finance-results" hidden>
+          <section class="finance-panel result-source"><p class="eyebrow">INPUT PROVENANCE</p><div id="source-summary"></div><p class="unreviewed-warning"><strong>Not reviewed.</strong> This calculator has not independently checked the source or the values. Verify figures, definitions, period, and accounting classification before using or publishing results.</p></section>
+          <section class="finance-panel"><div class="panel-heading"><div><p class="eyebrow">02 / CALCULATED RESULTS</p><h2>Analysis summary</h2></div><span class="result-units" id="result-units"></span></div><div id="metrics-output" class="metrics-output"></div></section>
+          <section class="finance-panel"><p class="eyebrow">03 / DATA QUALITY & LIMITS</p><h2>Read with context</h2><ul id="limitations-output" class="limitations-list"></ul></section>
+        </div>
+        <section class="finance-panel methodology"><p class="eyebrow">METHODOLOGY</p><h2>What these calculations do—and do not—say</h2><details><summary>Formula and interpretation notes</summary><ul>
+          <li><strong>Growth:</strong> (current revenue − prior revenue) ÷ prior revenue. Not defined when prior revenue is zero or negative; period definitions must match.</li>
+          <li><strong>Margins:</strong> gross profit, operating profit, or net income ÷ revenue. Classifications can differ across reporting standards and firms.</li>
+          <li><strong>Liquidity:</strong> working capital = current assets − current liabilities; current ratio = current assets ÷ current liabilities; quick ratio subtracts inventory. These are point-in-time measures and do not establish cash availability.</li>
+          <li><strong>Leverage:</strong> debt ÷ equity. A zero or negative equity denominator makes the usual interpretation unreliable; zero is not calculated.</li>
+          <li><strong>Cash-flow quality:</strong> operating cash flow ÷ net income. One period is not a trend, and working-capital changes or one-off items can affect it.</li>
+          <li><strong>Cash-flow subtotal:</strong> operating + investing + financing flows. It is not necessarily the reported net change in cash because FX and other reconciliation items may be absent.</li>
+        </ul></details><p class="limitation-note">This is a calculation prototype, not investment advice. No company data is preloaded, verified, or published by this page.</p></section>
+      </section>
+    </section>
+    <footer class="finance-footer"><a href="/">← Return to portfolio</a><span>Formula outputs are traceable; financial source figures still need human review.</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='js/finance.js') }}" defer></script>
+</body>
+</html>

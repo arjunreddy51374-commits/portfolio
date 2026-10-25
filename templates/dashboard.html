@@ -19,7 +19,7 @@
 
   <main id="main" class="page-shell" data-image-model-ready="{{ 'true' if image_model_ready else 'false' }}">
     <section class="intro" id="overview">
-      <div><p class="eyebrow">RESEARCH / ANALYTICS</p><h1>Breast Cancer<br><span>Classification Study</span></h1><p class="intro-copy">A transparent machine-learning demonstration using structured measurements from the Wisconsin Diagnostic Breast Cancer dataset.</p></div>
+      <div><p class="eyebrow">RESEARCH / ANALYTICS</p><h1>Breast Cancer<br><span>Classification Study</span></h1><p class="intro-copy">A transparent machine-learning demonstration using 30 digitized cell-nuclei measurements from the Wisconsin Diagnostic Breast Cancer dataset. It does not analyze medical images.</p></div>
       <aside class="status-card"><span class="status-dot"></span><div><strong>Model ready</strong><small>{{ model_name }} · {{ model_version }}</small></div><a href="#assessment" class="button button-primary">Start assessment <span aria-hidden="true">→</span></a></aside>
     </section>
 
@@ -46,7 +46,7 @@
         <div class="form-actions"><button class="button button-primary" type="submit"><span class="button-label">Run research demo</span><span class="spinner" aria-hidden="true"></span></button><button class="button button-secondary" type="reset">Clear all</button></div>
         <div id="prediction-result" class="result-panel" role="status" aria-live="polite" tabindex="-1" hidden></div>
       </form>
-      <p class="disclaimer"><strong>Important:</strong> Educational/research demonstration only. The output is not a diagnosis or a patient-level risk estimate. Do not use it for screening, treatment, or patient care.</p>
+      <p class="disclaimer"><strong>Important:</strong> This demonstration is for educational and research purposes only. It is not a medical diagnostic service and must not replace assessment by a qualified healthcare professional. Do not use it for screening, treatment, or patient care.</p>
     </section>
 
     <section class="section-block" id="image-review" aria-labelledby="image-review-title">

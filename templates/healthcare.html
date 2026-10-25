@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Source-attributed operational healthcare KPI calculator using aggregate totals only.">
+  <title>Healthcare Analytics · Sunilkumar Vajjiram</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/finance.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to KPI workspace</a>
+  <header class="finance-header">
+    <a class="finance-brand" href="/" aria-label="Return to portfolio"><span>SV</span><div>HEALTHCARE ANALYTICS<small>Operations KPI workspace</small></div></a>
+    <nav aria-label="Main navigation"><a href="/#about">About</a><a href="/#projects">Projects</a><a href="/finance">Finance</a><a aria-current="page" href="/health-analytics">Healthcare</a><a href="/dashboard">ML research</a></nav>
+  </header>
+  <main id="main" class="finance-shell">
+    <section class="finance-hero"><p class="eyebrow">HEALTHCARE OPERATIONS / 01</p><h1>Define the KPI.<br><span>Show the denominator.</span></h1><p>Calculate standard operations indicators from aggregated figures that you enter, with their source, period, formula, and limitations shown alongside each result.</p><div class="hero-badges"><span>Aggregate data only</span><span>Source attributed</span><span>No sample results</span></div></section>
+    <section class="finance-grid">
+      <form id="health-form" class="finance-panel" novalidate>
+        <div class="panel-heading"><div><p class="eyebrow">01 / SOURCE & TOTALS</p><h2>Enter aggregate figures</h2></div><span class="status-pill">Draft · unreviewed</span></div>
+        <p class="panel-intro">Enter totals from an authorized operational report. Use the same facility scope, cohort, and reporting period for each numerator/denominator pair. Do not enter patient-level records or identifiers.</p>
+        <fieldset class="finance-fieldset"><legend>Reporting context</legend>
+          <label>Source document URL<input name="source_url" type="url" placeholder="https://..." required></label>
+          <label>Reporting period<input name="period" placeholder="For example: April 2025 or FY2025-Q1" maxlength="80" required></label>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Length of stay and capacity</legend>
+          <label>Inpatient days<input name="inpatient_days" type="number" min="0" step="any"></label>
+          <label>Discharges in same cohort/period<input name="discharges" type="number" min="0" step="any"></label>
+          <label>Occupied staffed bed-days<input name="occupied_bed_days" type="number" min="0" step="any"></label>
+          <label>Available staffed bed-days<input name="available_staffed_bed_days" type="number" min="0" step="any"></label>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Service and discharge timing</legend>
+          <label>Total wait minutes for included consultations<input name="total_wait_minutes" type="number" min="0" step="any"></label>
+          <label>Completed consultations in same group<input name="completed_consultations" type="number" min="0" step="any"></label>
+          <label>Total discharge turnaround minutes<input name="total_discharge_turnaround_minutes" type="number" min="0" step="any"></label>
+          <label>Completed discharges in same group<input name="completed_discharges" type="number" min="0" step="any"></label>
+        </fieldset>
+        <fieldset class="finance-fieldset"><legend>Reporting completeness</legend>
+          <label>Reports received<input name="reports_received" type="number" min="0" step="1"></label>
+          <label>Reports expected in same cycle/scope<input name="reports_expected" type="number" min="0" step="1"></label>
+        </fieldset>
+        <div class="form-actions"><button class="button-primary" type="submit"><span class="button-text">Calculate available KPIs</span><span class="spinner" aria-hidden="true"></span></button><button class="button-secondary" type="reset">Clear form</button></div>
+        <p class="privacy-note">This prototype only accepts aggregate totals and does not store requests. Use an authorized source; do not submit patient-level or confidential data.</p>
+      </form>
+      <section class="results-column" aria-label="Healthcare KPI output">
+        <div id="health-empty" class="finance-panel empty-state"><span class="empty-mark">+</span><p class="eyebrow">NO DATA LOADED</p><h2>Bring an authorized source</h2><p>No district, hospital, or programme figures are preloaded. Results appear only for complete numerator/denominator pairs that you submit.</p></div>
+        <div id="health-results" hidden>
+          <section class="finance-panel result-source"><p class="eyebrow">INPUT PROVENANCE</p><div id="health-source-summary"></div><p class="unreviewed-warning"><strong>Not reviewed.</strong> This tool cannot verify the source document or whether your aggregation and KPI definitions are appropriate.</p></section>
+          <section class="finance-panel"><div class="panel-heading"><div><p class="eyebrow">02 / CALCULATED RESULTS</p><h2>Available indicators</h2></div></div><div id="health-metrics" class="metrics-output"></div></section>
+          <section class="finance-panel"><p class="eyebrow">03 / DATA QUALITY & LIMITS</p><h2>Check before interpretation</h2><ul id="health-limitations" class="limitations-list"></ul></section>
+        </div>
+        <section class="finance-panel methodology"><p class="eyebrow">KPI DEFINITIONS</p><h2>Numerator, denominator, exclusions</h2><details open><summary>Operational definitions (confirm locally)</summary><ul>
+          <li><strong>Average length of stay:</strong> inpatient days for the discharge cohort ÷ discharges in the same cohort/period. Agree how partial days, transfers, and observation stays are handled.</li>
+          <li><strong>Bed occupancy rate:</strong> occupied staffed bed-days ÷ available staffed bed-days × 100. The denominator must use staffed/available capacity for the same facility and dates.</li>
+          <li><strong>Consultation wait:</strong> total elapsed wait minutes ÷ included completed consultations. Define start/end events, appointment type, cancellations, and outliers.</li>
+          <li><strong>Discharge turnaround:</strong> total minutes from the locally defined discharge decision to bed release/ready ÷ included completed discharges. A common start/end definition must be agreed before comparing units.</li>
+          <li><strong>Reporting completeness:</strong> reports received ÷ reports expected × 100 for the same reporting cycle and geographic/facility scope.</li>
+        </ul></details><p class="limitation-note">These are generic demonstration definitions, not official NHM, hospital, or NGO targets. No trend, comparison, or performance judgement is possible without validated repeated-period data and approved definitions.</p></section>
+      </section>
+    </section>
+    <footer class="finance-footer"><a href="/">← Return to portfolio</a><span>Only user-entered aggregate data · no patient records or preloaded statistics</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='js/healthcare.js') }}" defer></script>
+</body>
+</html>

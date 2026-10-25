@@ -187,3 +187,53 @@ body { margin: 0; background: var(--canvas); color: var(--ink); font-size: 15px;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Shared premium dark theme for the research dashboard. */
+:root {
+  color-scheme: dark;
+  --ink: #e9e5d9;
+  --teal: #68b99c;
+  --muted: #afbeb2;
+  --line: rgba(200, 168, 93, .25);
+  --surface: #0b211c;
+  --canvas: #071b17;
+  --soft: #0b3027;
+  --danger: #e9a49a;
+}
+body { background: radial-gradient(ellipse at 80% 0%, rgba(23,107,85,.15), transparent 32rem), var(--canvas); color: var(--ink); }
+.topbar { background: rgba(7,27,23,.97); border-color: var(--line); }
+.brand, .brand-mark, .status-card, .section-block, .panel, .metric-card, .feature-group,
+.image-preview-card, .matrix tbody th, .matrix thead th, .button-secondary, .environment, .pill {
+  background-color: var(--surface); color: var(--ink); border-color: var(--line);
+}
+.topbar nav a, .section-note, .intro-copy, .metric-card small, .inline-note, .feature-group > p,
+.input-grid label, .help-text, .comparison-label span, .importance-row > span,
+.info-list dt, .info-list dd, .about-panel > p:not(.eyebrow), .page-footer,
+.image-empty-state, .image-empty-state strong, .image-file-details, .upload-box small {
+  color: var(--muted);
+}
+.intro h1, .section-heading h2, .panel h2, .about-panel h2, .metric-card strong,
+.brand-mark, .feature-group legend, .status-card strong { color: var(--ink); }
+.intro h1 span, .eyebrow, .text-link, .topbar nav a:hover { color: #c8a85d; }
+.button-primary { background: #c8a85d; color: #11241c; }
+.button-primary:hover { background: #ddc47f; }
+.button-secondary { border-color: var(--line); color: var(--ink); }
+.input-grid input, .image-review-form select, .image-review-form textarea {
+  background: #071b17; color: var(--ink); border-color: rgba(175,190,178,.32);
+}
+.input-grid input::placeholder, .image-review-form textarea::placeholder { color: #8fa295; }
+.upload-box { background: rgba(11,48,39,.58); border-color: rgba(200,168,93,.4); color: var(--ink); }
+.upload-box:hover { background: rgba(23,107,85,.22); }
+.upload-icon, .image-empty-state > span { color: #c8a85d; }
+.matrix th, .matrix td, .info-list div { border-color: rgba(200,168,93,.2); }
+.matrix .correct { background: rgba(31,112,79,.24); color: #a5e2bf; }
+.matrix .error-cell { background: rgba(153,65,59,.18); color: #f1b2a7; }
+.bar-track { background: #17382f; }
+.bar-track span { background: linear-gradient(90deg, #176b55, #c8a85d); }
+.about-panel .data-note { background: rgba(23,107,85,.16); }
+.disclaimer { background: rgba(130,89,33,.14); border-color: #c8a85d; color: #ead6a8; }
+.unavailable-pill { background: rgba(130,89,33,.14); border-color: rgba(200,168,93,.35); color: #ead6a8; }
+.available-pill { background: rgba(31,112,79,.18); border-color: rgba(104,185,156,.34); color: #b7e5cf; }
+.result-panel { background: rgba(31,112,79,.16); border-color: rgba(104,185,156,.34); }
+.result-panel p { color: #d0ded2; }
+.result-panel .result-warning { color: #ead6a8; }

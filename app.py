@@ -11,6 +11,8 @@ from flask import Flask, jsonify, render_template, request
 from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 
+from finance.calculations import FinancialInputError, analyze_financials
+from healthcare.metrics import HealthMetricInputError, analyze_health_kpis
 from ml.model_service import (
     MODEL_NAME,
     MODEL_VERSION,
@@ -44,7 +46,6 @@ certifications = read_data("certifications.json")
 education = read_data("education.json")
 skills = read_data("skills.json")
 model, training_features, feature_names = train_prediction_model()
-feature_medians = np.median(training_features, axis=0)
 feature_groups = [
     ("Mean values", [name for name in feature_names if name.startswith("mean ")]),
     ("Standard error values", [name for name in feature_names if name.endswith("error")]),
@@ -109,7 +110,7 @@ def prediction_response(features: np.ndarray):
             "type": "global_feature_importance",
             "message": "Global feature importance describes the model overall; it does not explain this individual result.",
         },
-        "disclaimer": "Research and education only. This is not a diagnosis or clinical decision-support tool. Do not use for patient care.",
+        "disclaimer": "This demonstration is for educational and research purposes only. It is not a medical diagnostic service and must not replace assessment by a qualified healthcare professional.",
     }
 
 
@@ -123,6 +124,12 @@ def index():
         certifications=certifications,
         education=education,
         skills=skills,
+        resume_available=(BASE_DIR / "static" / "documents" / "resume.pdf").is_file(),
+        available_static_files={
+            project["report"]
+            for project in projects
+            if project.get("report") and (BASE_DIR / "static" / project["report"]).is_file()
+        },
     )
 
 
@@ -138,6 +145,43 @@ def dashboard():
         model_version=MODEL_VERSION,
         image_model_ready=image_model is not None,
     )
+
+
+@app.get("/finance")
+def finance_dashboard():
+    return render_template("finance.html")
+
+
+@app.post("/api/finance/analyze")
+def finance_analyze():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json."), 415
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="Request body must be a JSON object."), 400
+    try:
+        result = analyze_financials(payload)
+    except FinancialInputError as error:
+        return jsonify(error=str(error)), 400
+    return jsonify(result)
+
+
+@app.get("/health-analytics")
+def healthcare_dashboard():
+    return render_template("healthcare.html")
+
+
+@app.post("/api/healthcare/kpis")
+def healthcare_kpis():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json."), 415
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="Request body must be a JSON object."), 400
+    try:
+        return jsonify(analyze_health_kpis(payload))
+    except HealthMetricInputError as error:
+        return jsonify(error=str(error)), 400
 
 
 @app.get("/health")
@@ -240,27 +284,11 @@ def predict_image():
 
 @app.post("/api/predict")
 def legacy_demo_predict():
-    """Keep the original three-value portfolio demo route, clearly marked as partial."""
-    payload, error = json_payload()
-    if error:
-        return error
-    required = ("mean_radius", "mean_texture", "mean_perimeter")
-    if any(name not in payload for name in required):
-        return jsonify(error="Provide numeric mean_radius, mean_texture, and mean_perimeter values."), 400
-    values = dict(zip(feature_names[:3], (payload[name] for name in required)))
-    features, errors = validate_feature_payload(
-        {**dict(zip(feature_names, feature_medians.tolist())), **values}, feature_names
-    )
-    if errors:
-        return jsonify(error="Input validation failed.", details=errors), 400
-    result = prediction_response(features)
-    is_malignant = result["prediction"] == "Malignant"
+    """Retire the misleading legacy endpoint that substituted median features."""
     return jsonify(
-        classification="Higher-risk pattern" if is_malignant else "Lower-risk pattern",
-        probability=round(max(result["model_output"]["malignant_score"], result["model_output"]["benign_score"]) * 100, 1),
-        confidence_label="malignant-pattern" if is_malignant else "benign-pattern",
-        disclaimer="Incomplete three-feature portfolio demo; remaining inputs are filled with dataset medians. Not a diagnosis or clinical tool.",
-    )
+        error="This three-feature shortcut has been retired. The model requires all 30 WDBC measurements.",
+        replacement="Use POST /predict with the complete 30-feature payload, or open /dashboard.",
+    ), 410
 
 
 @app.errorhandler(413)
