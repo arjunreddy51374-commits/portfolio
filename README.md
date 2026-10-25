@@ -14,21 +14,6 @@ python app.py
 
 Open `http://127.0.0.1:5050` for the portfolio or `http://127.0.0.1:5050/dashboard` for the analytics dashboard. Do not open a template directly: templates require Flask.
 
-## Deploy to Render
-
-Deploy this Flask project as a **Web Service**, not a Static Site. Flask serves the pages and API endpoints, and the model runs in the backend.
-
-1. Push the project to a GitHub repository.
-2. In Render, choose **New + → Web Service** and connect that repository.
-3. Set the **Root Directory** to `Sunilkumar Portfoliio` if this project is inside a larger repository; otherwise leave it blank.
-4. Choose **Runtime: Python 3**.
-5. Set **Build Command** to `pip install -r requirements.txt`.
-6. Set **Start Command** to `gunicorn --bind 0.0.0.0:$PORT app:app`.
-7. Select a Python runtime compatible with the installed scikit-learn and NumPy packages, then create the service.
-8. When deployment finishes, open the Render URL and check `/health` and `/dashboard`.
-
-Render's filesystem is not persistent by default. The evaluation JSON is committed with the app; do not rely on files written at runtime remaining after a restart. The optional mammography model is not present/trained and should not be enabled for a public deployment without suitable validation. Do not upload real patient images or personal health information.
-
 ## Model evaluation and API
 
 - `python train_tabular.py` evaluates Logistic Regression, Decision Tree, Support Vector Machine, and Random Forest. It uses a reproducible stratified 80/20 hold-out split and five-fold cross-validation on the training partition only, then saves the results to `data/model_evaluation.json`.
