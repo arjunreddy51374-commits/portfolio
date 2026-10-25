@@ -133,6 +133,7 @@ function renderPublic(data) {
   for (const run of data.calculations) {
     const article = document.createElement('article');
     article.className = 'published-calculation';
+    article.dataset.domain = run.domain;
     textNode(article, 'p', `${run.canonical_name} · ${run.period_id} · Formula catalogue ${run.formula_catalog_version}`, 'calc-overline');
     textNode(article, 'h3', run.domain === 'government' ? 'Government finance results' : 'Corporate finance results');
     const grid = document.createElement('div');

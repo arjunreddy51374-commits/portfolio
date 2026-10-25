@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fip.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-audit.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-ingestion.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fip-theme.css') }}">
 </head>
-<body>
+<body class="fip-theme fip-platform">
   <a class="skip-link" href="#main">Skip to FIP workspace</a>
   <header class="topbar">
     <a class="brand" href="/fip"><span class="brand-mark">F</span><span>FIP<small>FINANCIAL INTELLIGENCE PLATFORM</small></span></a>
@@ -17,8 +18,8 @@
   </header>
   <main id="main" class="shell">
     <section class="hero">
-      <div><p class="eyebrow">RELEASE 1 · LOCAL PROTOTYPE</p><h1>Financial facts,<br><em>with evidence attached.</em></h1>
-        <p class="lede">Choose Manual, Automatic, or Hybrid ingestion. Capture or retrieve evidence, validate each reported figure, and publish only after review. Corporate and government calculations retain their inputs and formula versions.</p>
+      <div><p class="eyebrow">RELEASE 1 · LOCAL PROTOTYPE</p><h1>Trusted Financial<br><em>Intelligence.</em></h1>
+        <p class="lede"><strong class="hero-promise">Traceable. Explainable. Reproducible.</strong> Choose Manual, Automatic, or Hybrid ingestion. Capture or retrieve evidence, validate each reported figure, and publish only after review. Corporate and government calculations retain their inputs and formula versions.</p>
         <div class="chips"><span>Selectable ingestion modes</span><span>Review-gated publishing</span><span>SQLite lineage</span></div>
       </div>
       <aside class="readiness"><span class="readiness-dot"></span><div><strong>Configurable · Manual, Automatic, or Hybrid</strong><p>Automatic retrieval requires an approved public source and reviewed CSV/JSON connector. Results still require human approval.</p></div></aside>

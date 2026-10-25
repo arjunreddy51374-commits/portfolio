@@ -1,0 +1,263 @@
+/* Imperial Finance Gold — deliberately loaded only by FIP pages. */
+body.fip-theme {
+  color-scheme: light;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel2: #fafafa;
+  --line: #e5e7eb;
+  --gold: #d4af37;
+  --gold-deep: #b8860b;
+  --ink: #111827;
+  --muted: #4b5563;
+  --green: #b8860b;
+  --red: #b42318;
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 58%, #fafafa 100%);
+  color: var(--ink);
+}
+
+.fip-theme .skip-link:focus { background: var(--ink); color: #fff; }
+.fip-theme .topbar {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 4px 20px rgba(17, 24, 39, .045);
+}
+.fip-theme .brand, .fip-theme .brand small { color: var(--ink); }
+.fip-theme .brand small { color: var(--muted); }
+.fip-theme .brand-mark { border-color: var(--gold); color: var(--gold-deep); }
+.fip-theme .topbar nav a, .fip-theme .footer a { color: var(--muted); }
+.fip-theme .topbar nav a { padding: 6px 0; border-bottom: 2px solid transparent; }
+.fip-theme .topbar nav a:hover,
+.fip-theme .topbar nav a[aria-current="page"] { color: var(--gold-deep); border-bottom-color: var(--gold); }
+.fip-theme .footer { color: var(--muted); }
+
+.fip-platform .hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(115deg, #fff 10%, rgba(250, 250, 250, .68) 100%);
+  border-bottom: 1px solid var(--line);
+}
+.fip-platform .hero::before {
+  content: "₿     $     €     ₹     £     ¥";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  display: flex;
+  width: 66%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(184, 134, 11, .16);
+  font: 500 clamp(2rem, 5.3vw, 5rem)/1.3 Georgia, "Times New Roman", serif;
+  letter-spacing: .07em;
+  white-space: nowrap;
+  opacity: .34;
+  filter: blur(.25px);
+  pointer-events: none;
+  animation: fip-watermark-drift 18s ease-in-out infinite alternate;
+}
+.fip-platform .hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 12%;
+  right: 4%;
+  width: 43%;
+  height: 76%;
+  background:
+    linear-gradient(148deg, transparent 49.7%, rgba(184, 134, 11, .13) 50%, transparent 50.3%),
+    linear-gradient(32deg, transparent 49.7%, rgba(184, 134, 11, .11) 50%, transparent 50.3%),
+    linear-gradient(90deg, transparent 49.8%, rgba(184, 134, 11, .08) 50%, transparent 50.2%);
+  pointer-events: none;
+}
+.fip-platform .hero > * { position: relative; z-index: 1; }
+.fip-platform .hero h1 em { color: var(--gold-deep); }
+.fip-platform .hero-promise { color: var(--gold-deep); font-weight: 750; }
+.fip-theme .lede { color: var(--muted); }
+.fip-theme .chips span, .fip-theme .secure-label {
+  border-color: var(--line);
+  background: #fff;
+  color: #374151;
+}
+.fip-theme .readiness {
+  border-color: rgba(212, 175, 55, .45);
+  background: rgba(250, 250, 250, .94);
+  box-shadow: 0 10px 28px rgba(17, 24, 39, .04);
+}
+.fip-theme .readiness-dot { background: var(--gold); box-shadow: 0 0 12px rgba(212, 175, 55, .38); }
+.fip-theme .readiness p { color: var(--muted); }
+
+.fip-theme .stat-card,
+.fip-theme .published-calculation,
+.fip-theme .published-metrics span,
+.fip-theme .form-card,
+.fip-theme .ingestion-panel,
+.fip-theme .guide-index,
+.fip-theme .guide-section,
+.fip-theme .guide-start,
+.fip-theme .guide-callout,
+.fip-theme .guide-note,
+.fip-theme .token-row,
+.fip-theme .ingestion-source-grid,
+.fip-theme .ingestion-job,
+.fip-theme .register-row,
+.fip-theme .staff-details,
+.fip-theme .audit-feed article {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 8px 26px rgba(17, 24, 39, .035);
+}
+.fip-theme .stat-card,
+.fip-theme .published-calculation,
+.fip-theme .form-card,
+.fip-theme .ingestion-panel {
+  border-color: rgba(212, 175, 55, .55);
+  transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease;
+}
+.fip-theme .stat-card:hover,
+.fip-theme .published-calculation:hover,
+.fip-theme .form-card:hover,
+.fip-theme .ingestion-panel:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, .2), 0 12px 30px rgba(184, 134, 11, .11);
+  transform: translateY(-2px);
+}
+.fip-theme .section-block,
+.fip-theme .guide-section,
+.fip-theme .staff-details {
+  border-color: var(--line);
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(17, 24, 39, .045);
+}
+.fip-theme .section-heading h2,
+.fip-theme .methodology-block h2,
+.fip-theme .guide-section h2,
+.fip-theme .guide-start h2,
+.fip-theme .form-card h3,
+.fip-theme .queue-heading h3,
+.fip-theme .published-calculation h3 { color: var(--ink); }
+.fip-theme .section-note,
+.fip-theme .small-note,
+.fip-theme .guide-callout p,
+.fip-theme .guide-note p,
+.fip-theme .guide-section > p:not(.eyebrow):not(.guide-footnote):not(.guide-principle),
+.fip-theme .guide-card > p:not(.eyebrow),
+.fip-theme .step-list p,
+.fip-theme .guide-card li,
+.fip-theme .published-calculation ul { color: var(--muted); }
+.fip-theme .stat-card span,
+.fip-theme .published-metrics small,
+.fip-theme .calc-overline,
+.fip-theme .guide-footnote,
+.fip-theme .formula-example span,
+.fip-theme .formula-example small { color: var(--muted); }
+.fip-theme .stat-card strong,
+.fip-theme .published-metrics strong { color: var(--gold-deep); }
+.fip-theme .published-metrics span { border-color: var(--line); background: var(--panel2); }
+.fip-theme .published-calculation[data-domain="government"] {
+  border-left: 3px solid #1f3a5f;
+  background: linear-gradient(100deg, #f3f6fa 0%, #fff 38%);
+}
+.fip-theme .published-calculation[data-domain="government"] h3 { color: #1f3a5f; }
+
+.fip-theme .table-wrap { border-color: var(--line); background: #fff; }
+.fip-theme th { background: #f3f4f6; color: var(--gold-deep); }
+.fip-theme td { color: #374151; }
+.fip-theme th, .fip-theme td { border-bottom-color: var(--line); }
+.fip-theme td a, .fip-theme .guide-section a { color: var(--gold-deep); }
+.fip-theme .table-wrap tbody tr:hover { background: #fffcf2; }
+.fip-theme .empty-row { color: var(--muted); }
+.fip-theme label { color: #374151; }
+.fip-theme label span { color: var(--muted); }
+.fip-theme input,
+.fip-theme select,
+.fip-theme textarea,
+.fip-theme .reconciliation-output {
+  border-color: #d1d5db;
+  background: #fff;
+  color: var(--ink);
+}
+.fip-theme input::placeholder,
+.fip-theme textarea::placeholder { color: #6b7280; }
+.fip-theme .button.primary { background: var(--gold); color: #111827; }
+.fip-theme .button.primary:hover { background: var(--gold-deep); color: #fff; }
+.fip-theme .button.secondary,
+.fip-theme .button.quiet,
+.fip-theme .action-button {
+  border-color: #d1d5db;
+  background: #fff;
+  color: #374151;
+}
+.fip-theme .button.secondary:hover,
+.fip-theme .button.quiet:hover,
+.fip-theme .action-button:hover { border-color: var(--gold); background: #fffcf2; color: #111827; }
+.fip-theme .notice,
+.fip-theme .release-summary,
+.fip-theme .formula-example,
+.fip-theme .hybrid-recommendation,
+.fip-theme .ingestion-active-job,
+.fip-theme .boundary-grid p,
+.fip-theme .guide-principle {
+  border-left-color: var(--gold);
+  background: #fffcf2;
+  color: #374151;
+}
+.fip-theme .notice.success { border-color: var(--gold-deep); background: #fff9e6; color: #6b4f00; }
+.fip-theme .notice.error { border-color: var(--red); background: #fef2f2; color: #7f1d1d; }
+.fip-theme .ingestion-mode-grid .hybrid-recommendation strong,
+.fip-theme .hybrid-recommendation strong,
+.fip-theme .notice { color: #4b3b0b; }
+.fip-theme .ingestion-job small,
+.fip-theme .ingestion-job span,
+.fip-theme .muted-text,
+.fip-theme .audit-feed span,
+.fip-theme .audit-feed p,
+.fip-theme .metric-input-trace,
+.fip-theme .calc-source-trace,
+.fip-theme .register-row small { color: var(--muted); }
+.fip-theme .ingestion-job strong,
+.fip-theme .audit-feed strong,
+.fip-theme .register-row strong { color: var(--ink); }
+.fip-theme .state,
+.fip-theme .guide-status,
+.fip-theme .ingestion-status-queued,
+.fip-theme .ingestion-status-running,
+.fip-theme .ingestion-status-awaiting_review,
+.fip-theme .ingestion-status-completed { color: var(--gold-deep); }
+.fip-theme .state-published,
+.fip-theme .state-verified,
+.fip-theme .state-approved { border-color: rgba(184, 134, 11, .42); color: var(--gold-deep); }
+.fip-theme .guide-status.approved,
+.fip-theme .guide-status.published { border-color: rgba(184, 134, 11, .42); color: var(--gold-deep); }
+.fip-theme .ingestion-status-failed,
+.fip-theme .state-validation_failed,
+.fip-theme .guide-status.failed { color: var(--red); }
+.fip-theme .ingestion-job-exceptions { border-left-color: var(--red); background: #fef2f2; color: #7f1d1d; }
+.fip-theme .guide-index-links a { border-color: var(--line); background: #fff; color: #374151; }
+.fip-theme .guide-index-links a:hover { border-color: var(--gold); color: var(--gold-deep); }
+.fip-theme .guide-start { border-color: rgba(212, 175, 55, .5); background: linear-gradient(110deg, #fffdf5, #fff 75%); }
+.fip-theme .step-list li { border-top-color: var(--line); }
+.fip-theme .step-list li::before { border-color: rgba(184, 134, 11, .45); color: var(--gold-deep); }
+.fip-theme .formula-example code { color: #6b4f00; }
+.fip-theme .guide-principle { color: var(--ink); }
+.fip-theme .audit-details { border-top-color: var(--line); }
+.fip-theme .audit-feed article { border-color: var(--line); }
+.fip-theme .audit-feed strong { color: var(--ink); }
+.fip-theme .register-row { border-color: var(--line); }
+.fip-theme .staff-details > summary { color: var(--gold-deep); }
+.fip-theme .staff-details[open] > summary { border-bottom-color: var(--line); }
+.fip-theme .reconciliation-output { color: #374151; }
+
+@keyframes fip-watermark-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-8px, 4px, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fip-platform .hero::before { animation: none; }
+  .fip-theme .stat-card, .fip-theme .published-calculation,
+  .fip-theme .form-card, .fip-theme .ingestion-panel { transition: none; }
+  .fip-theme .stat-card:hover, .fip-theme .published-calculation:hover,
+  .fip-theme .form-card:hover, .fip-theme .ingestion-panel:hover { transform: none; }
+}
