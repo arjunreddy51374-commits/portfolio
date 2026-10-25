@@ -13,7 +13,7 @@
   <a class="skip-link" href="#main">Skip to FIP workspace</a>
   <header class="topbar">
     <a class="brand" href="/fip"><span class="brand-mark">F</span><span>FIP<small>FINANCIAL INTELLIGENCE PLATFORM</small></span></a>
-    <nav aria-label="Main navigation"><a aria-current="page" href="/fip">Platform</a><a aria-label="How to use FIP" href="/fip/guide">Guide</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
+    <nav aria-label="Main navigation"><a aria-current="page" href="/fip">Platform</a><a aria-label="How to use FIP" href="/fip/guide">Guide</a><a href="/fip/staff#staff-workspace">Staff</a><a href="/finance">Calculator</a><a href="/">Portfolio</a></nav>
   </header>
   <main id="main" class="shell">
     <section class="hero">
@@ -40,6 +40,8 @@
       <div id="public-calculations" class="calculation-feed"></div>
     </section>
 
+    <details id="staff-details" class="staff-details" {% if staff_open %}open{% endif %}>
+      <summary><span>Authorized staff workspace</span><small>Admin and reviewer tokens required for operations</small></summary>
     <section id="staff-workspace" class="section-block staff-block">
       <div class="section-heading"><div><p class="eyebrow">02 / CONTROLLED WORKSPACE</p><h2>Capture, review, calculate</h2></div><span class="secure-label">Staff tokens stay in this tab only</span></div>
       <p class="section-note">The admin token registers records and starts calculations. The reviewer token verifies identity, approves sources, validates observations, and publishes. Set both tokens on the server before use.</p>
@@ -186,12 +188,13 @@
       <details><summary>Release gates</summary><div id="release-gates" class="register-list"></div></details>
       <details><summary>Non-functional requirements</summary><div id="nfr-register" class="register-list"></div></details>
     </section>
+    </details>
 
     <section class="section-block methodology-block"><p class="eyebrow">IMPLEMENTATION BOUNDARY</p><h2>What this build covers</h2>
-      <div class="boundary-grid"><p><strong>Implemented:</strong> entity/source registries, sourced aliases and relationships, a versioned metric catalogue, framework metadata, manual evidence capture, governed period/unit/FX standardization, reviewer lifecycle, correction history, audit reasons, calculation lineage, immutable data-release snapshots, an Excel report workbook and CSV, a Power BI JSON API, and release/NFR registers.</p>
-      <p><strong>Still outside this build:</strong> automatic source retrieval and document extraction, global external identity resolution, a native Power BI report package, user accounts and SSO, hosted PostgreSQL/object storage, automated monitoring/backup/recovery, performance and security testing, production deployment, and the deferred forecast/AI/valuation/commercial modules.</p></div>
+      <div class="boundary-grid"><p><strong>Implemented:</strong> entity/source registries, sourced aliases and relationships, a versioned metric catalogue, framework metadata, Manual/Automatic/Hybrid ingestion jobs, approved HTTPS CSV/JSON connectors, persistent global/source/job settings, scheduled retrieval worker, job retries and cancellation, idempotent evidence capture, reviewer-gated validation and publication, correction history, audit lineage, governed period/unit/FX standardization, calculation lineage, immutable data-release snapshots, Excel/CSV/Power BI JSON delivery, and release/NFR registers.</p>
+      <p><strong>Still outside this build:</strong> PDF/document extraction, external identity resolution, a native Power BI report package, individual user accounts and SSO, hosted PostgreSQL/object storage, multi-instance scheduler deployment, production monitoring/backup/recovery, measured performance/security assurance, and the deferred forecast/AI/valuation/commercial modules.</p></div>
     </section>
-    <footer class="footer"><a href="/">← Portfolio</a><span>FIP Enterprise v2.1 · Release 1 foundation</span></footer>
+    <footer class="footer"><a href="/">← Portfolio</a><span>FIP Enterprise v2.2 · Release 1 foundation</span></footer>
   </main>
   <script src="{{ url_for('static', filename='js/fip.js') }}" defer></script>
 </body>

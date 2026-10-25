@@ -246,7 +246,9 @@ def _conn(db_path: Path) -> sqlite3.Connection:
             trigger_type TEXT NOT NULL, requested_by TEXT NOT NULL, created_at TEXT NOT NULL,
             started_at TEXT, completed_at TEXT, records_seen INTEGER NOT NULL DEFAULT 0,
             observations_created INTEGER NOT NULL DEFAULT 0, observations_skipped INTEGER NOT NULL DEFAULT 0,
-            exceptions_json TEXT NOT NULL DEFAULT '[]', error_message TEXT
+            exceptions_json TEXT NOT NULL DEFAULT '[]', error_message TEXT,
+            attempt_count INTEGER NOT NULL DEFAULT 1, connector_version TEXT NOT NULL DEFAULT '1.0.0',
+            last_updated_at TEXT, cancelled_at TEXT
         );
         CREATE TABLE IF NOT EXISTS fx_rates (
             id TEXT PRIMARY KEY, source_currency TEXT NOT NULL, target_currency TEXT NOT NULL,
@@ -346,6 +348,13 @@ def _conn(db_path: Path) -> sqlite3.Connection:
                                 ("ingestion_mode", "TEXT"), ("idempotency_key", "TEXT")):
         if column not in observation_columns:
             connection.execute(f"ALTER TABLE observations ADD COLUMN {column} {declaration}")
+    job_columns = {row["name"] for row in connection.execute("PRAGMA table_info(ingestion_jobs)")}
+    for column, declaration in (("attempt_count", "INTEGER NOT NULL DEFAULT 1"),
+                                ("connector_version", "TEXT NOT NULL DEFAULT '1.0.0'"),
+                                ("last_updated_at", "TEXT"), ("cancelled_at", "TEXT")):
+        if column not in job_columns:
+            connection.execute(f"ALTER TABLE ingestion_jobs ADD COLUMN {column} {declaration}")
+    connection.execute("UPDATE ingestion_jobs SET last_updated_at=COALESCE(last_updated_at,created_at)")
     for row in connection.execute("SELECT id,value_decimal,currency,unit FROM observations WHERE standardized_value_decimal IS NULL OR standardized_currency IS NULL"):
         normalized = str(Decimal(row["value_decimal"]) * UNIT_FACTORS[row["unit"]])
         connection.execute("UPDATE observations SET standardized_value_decimal=?,standardized_currency=? WHERE id=?",
@@ -442,7 +451,11 @@ def staff_workspace(db_path: Path) -> dict[str, Any]:
         release_gates = [dict(row) for row in db.execute("SELECT * FROM release_gates ORDER BY gate_id")]
         nfr_register = [dict(row) for row in db.execute("SELECT * FROM nfr_register ORDER BY category")]
         audit = [dict(row) for row in db.execute("SELECT * FROM audit_events ORDER BY id DESC LIMIT 80")]
-        ingestion_jobs = [dict(row) for row in db.execute("SELECT * FROM ingestion_jobs ORDER BY created_at DESC LIMIT 50")]
+        ingestion_jobs = [dict(row) for row in db.execute("SELECT j.*,s.title AS source_title FROM ingestion_jobs j JOIN sources s ON s.id=j.source_id ORDER BY j.created_at DESC LIMIT 50")]
+        for job in ingestion_jobs:
+            job["exceptions"] = json.loads(job.pop("exceptions_json"))
+            if job.get("cancelled_at"):
+                job["status"] = "CANCELLED"
         ingestion_settings = db.execute("SELECT setting_value,updated_by,updated_at FROM fip_settings WHERE setting_key='global_ingestion_mode'").fetchone()
     return {"entities": entities, "aliases": aliases, "relationships": relationships,
             "metric_mappings": metric_mappings, "sources": sources, "fx_rates": fx_rates,

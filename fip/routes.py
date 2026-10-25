@@ -70,7 +70,11 @@ def create_blueprint(db_path: Path) -> Blueprint:
 
     @bp.get("/fip")
     def page():
-        return render_template("fip.html")
+        return render_template("fip.html", staff_open=False)
+
+    @bp.get("/fip/staff")
+    def staff_page():
+        return render_template("fip.html", staff_open=True)
 
     @bp.get("/fip/guide")
     def guide():
@@ -236,6 +240,23 @@ def create_blueprint(db_path: Path) -> Blueprint:
         denied = require_role("admin")
         if denied: return denied
         return respond(ingestion.run_job, db_path, record_id, "admin")
+
+    @bp.post("/api/fip/ingestion/jobs/<record_id>/retry")
+    def retry_ingestion_job(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        return respond(ingestion.retry_job, db_path, record_id, "admin")
+
+    @bp.post("/api/fip/ingestion/jobs/<record_id>/cancel")
+    def cancel_ingestion_job(record_id: str):
+        denied = require_role("admin")
+        if denied: return denied
+        body = payload()
+        if isinstance(body, tuple): return body
+        reason = body.get("reason")
+        if not isinstance(reason, str) or not reason.strip() or len(reason.strip()) > 1000:
+            return jsonify(error="A cancellation reason of 1 to 1000 characters is required and will be audited."), 400
+        return respond(ingestion.cancel_job, db_path, record_id, "admin", reason.strip())
 
     @bp.post("/api/fip/ingestion/jobs/<record_id>/observations")
     def add_manual_job_observation(record_id: str):

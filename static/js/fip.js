@@ -257,7 +257,7 @@ function renderIngestionJobs(jobs) {
     row.className = 'ingestion-job';
     const details = document.createElement('div');
     textNode(details, 'strong', job.source_title || job.source_id);
-    textNode(details, 'small', `${job.id} · ${job.created_at}`);
+    textNode(details, 'small', `${job.id} · attempt ${job.attempt_count} · ${job.connector_version} · updated ${job.last_updated_at || job.created_at}`);
     row.append(details);
     textNode(row, 'span', `${job.mode} · ${job.trigger_type}`);
     textNode(row, 'span', job.status, `state ingestion-status-${job.status.toLowerCase()}`);
@@ -290,6 +290,39 @@ function renderIngestionJobs(jobs) {
         document.querySelector('#active-ingestion-job').textContent = `Active HYBRID correction for job ${job.id}. Use the observation form below; you will be prompted for the exception row number.`;
         document.querySelector('#observation-source').value = job.source_id;
         document.querySelector('#observation-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+    if (job.status === 'FAILED') {
+      const retry = textNode(controls, 'button', 'Retry', 'button action-button');
+      retry.type = 'button';
+      retry.addEventListener('click', async () => {
+        try {
+          const queued = await api(`/api/fip/ingestion/jobs/${job.id}/retry`, { method: 'POST', role: 'admin' });
+          if (queued.mode !== 'MANUAL') {
+            const result = await api(`/api/fip/ingestion/jobs/${job.id}/run`, { method: 'POST', role: 'admin' });
+            setNotice(`Retry attempt ${result.attempt_count}: ${result.status.toLowerCase()}.`, result.status === 'FAILED' ? 'error' : 'success');
+          } else {
+            activeIngestionJob = { id: job.id, source_id: job.source_id, mode: job.mode, exceptions: [] };
+            setNotice(`Manual retry attempt ${queued.attempt_count} is queued.`, 'success');
+          }
+          await refreshWorkspace();
+        } catch (error) { setNotice(error.message, 'error'); }
+      });
+    }
+    if (job.status === 'QUEUED') {
+      const cancel = textNode(controls, 'button', 'Cancel', 'button action-button');
+      cancel.type = 'button';
+      cancel.addEventListener('click', async () => {
+        try {
+          const reason = window.prompt('Reason for cancelling this queued ingestion job:');
+          if (reason === null || !reason.trim()) return;
+          await api(`/api/fip/ingestion/jobs/${job.id}/cancel`, {
+            method: 'POST', role: 'admin', body: { reason: reason.trim() },
+          });
+          if (activeIngestionJob?.id === job.id) activeIngestionJob = null;
+          setNotice(`Ingestion job ${job.id} cancelled.`, 'success');
+          await refreshWorkspace();
+        } catch (error) { setNotice(error.message, 'error'); }
       });
     }
     row.append(controls);

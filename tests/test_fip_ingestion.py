@@ -100,6 +100,11 @@ def test_modes_persist_and_privileged_settings_require_admin(tmp_path):
     assert page.status_code == 200
     assert b"Data Ingestion Settings" in page.data
     assert b"Both / Hybrid" in page.data
+    public_workspace = page.data.split(b'<details id="staff-details" class="staff-details"', 1)[1].split(b'>', 1)[0]
+    assert b"open" not in public_workspace
+    staff_page = client.get("/fip/staff")
+    assert staff_page.status_code == 200
+    assert b'<details id="staff-details" class="staff-details" open>' in staff_page.data
     guide = client.get("/fip/guide")
     assert guide.status_code == 200
     assert b"New jobs default to" in guide.data
@@ -330,3 +335,41 @@ def test_scheduler_queues_due_approved_sources(tmp_path, monkeypatch):
     assert results[0]["trigger_type"] == "schedule"
     assert results[0]["mode"] == "AUTOMATIC"
     assert results[0]["status"] == "AWAITING_REVIEW"
+
+
+def test_failed_automatic_job_can_be_retried_and_queued_job_cancelled(tmp_path, monkeypatch):
+    client = make_client(tmp_path / "fip.sqlite3")
+    source_id = register_source(client)
+    entity_id = register_entity(client)
+    configure_connector(client, source_id, entity_id, "AUTOMATIC")
+
+    monkeypatch.setattr(ingestion, "fetch_source", lambda _url: (_ for _ in ()).throw(core.FIPError("temporary source outage")))
+    queued = client.post("/api/fip/ingestion/jobs", headers=ADMIN,
+                         json={"source_id": source_id, "mode": "AUTOMATIC"}).get_json()
+    failed = client.post(f"/api/fip/ingestion/jobs/{queued['id']}/run", headers=ADMIN).get_json()
+    assert failed["status"] == "FAILED"
+    assert "temporary source outage" in failed["error_message"]
+    assert failed["connector_version"].startswith("csv-json-1-csv-")
+    assert client.post(f"/api/fip/ingestion/jobs/{queued['id']}/retry", headers=REVIEWER).status_code == 401
+
+    retried = client.post(f"/api/fip/ingestion/jobs/{queued['id']}/retry", headers=ADMIN)
+    assert retried.status_code == 200, retried.get_json()
+    assert retried.get_json()["status"] == "QUEUED"
+    assert retried.get_json()["attempt_count"] == 2
+    monkeypatch.setattr(ingestion, "fetch_source", lambda _url: (
+        "row_id,domain,reported_label,value,period_id\n" "retry-revenue,corporate,Revenue,1100,FY2025\n"
+    ).encode())
+    succeeded = client.post(f"/api/fip/ingestion/jobs/{queued['id']}/run", headers=ADMIN).get_json()
+    assert succeeded["status"] == "AWAITING_REVIEW"
+    assert succeeded["observations_created"] == 1
+    assert succeeded["attempt_count"] == 2
+
+    manual_job = client.post("/api/fip/ingestion/jobs", headers=ADMIN,
+                             json={"source_id": source_id, "mode": "MANUAL"}).get_json()
+    assert client.post(f"/api/fip/ingestion/jobs/{manual_job['id']}/cancel", headers=ADMIN, json={}).status_code == 400
+    cancelled = client.post(f"/api/fip/ingestion/jobs/{manual_job['id']}/cancel", headers=ADMIN,
+                            json={"reason": "Operator cancelled the duplicate request."})
+    assert cancelled.status_code == 200, cancelled.get_json()
+    assert cancelled.get_json()["status"] == "CANCELLED"
+    assert client.post(f"/api/fip/ingestion/jobs/{manual_job['id']}/run", headers=ADMIN).status_code == 400
+    assert client.post(f"/api/fip/ingestion/jobs/{manual_job['id']}/retry", headers=ADMIN).status_code == 400

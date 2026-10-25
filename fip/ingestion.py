@@ -28,6 +28,7 @@ MODES = core.INGESTION_MODES
 CONNECTOR_FORMATS = {"manual_only", "csv", "json"}
 MAX_SOURCE_BYTES = 5 * 1024 * 1024
 MAX_RECORDS = 10_000
+CONNECTOR_IMPLEMENTATION_VERSION = "csv-json-1"
 REQUIRED_FIELDS = {
     "entity_id", "domain", "reported_label", "value", "currency", "unit",
     "period_id", "period_start", "period_end", "period_type", "reporting_basis",
@@ -88,6 +89,11 @@ def _settings_value(db: Any) -> str:
     return row["setting_value"] if row else "MANUAL"
 
 
+def _connector_version(connector_format: str, config_json: str) -> str:
+    digest = hashlib.sha256(f"{CONNECTOR_IMPLEMENTATION_VERSION}\0{connector_format}\0{config_json}".encode("utf-8")).hexdigest()[:12]
+    return f"{CONNECTOR_IMPLEMENTATION_VERSION}-{connector_format}-{digest}"
+
+
 def get_settings(db_path: Path) -> dict[str, Any]:
     with core._conn(db_path) as db:
         global_mode = _settings_value(db)
@@ -107,6 +113,8 @@ def get_settings(db_path: Path) -> dict[str, Any]:
 def _job_record(row: Any) -> dict[str, Any]:
     record = dict(row)
     record["exceptions"] = json.loads(record.pop("exceptions_json"))
+    if record.get("cancelled_at"):
+        record["status"] = "CANCELLED"
     return record
 
 
@@ -228,11 +236,14 @@ def create_job(db_path: Path, source_id: str, mode_override: Any, role: str,
         if source is None:
             raise core.FIPError("source was not found.")
         mode = override or source["ingestion_mode"] or _settings_value(db)
+        config_json = source["connector_config_json"]
         job = {"id": core.new_id("FIP-ING"), "source_id": source_id, "mode": mode,
                "mode_override": override, "status": "QUEUED", "trigger_type": trigger_type,
                "requested_by": role, "created_at": core.now_utc(), "started_at": None,
                "completed_at": None, "records_seen": 0, "observations_created": 0,
-               "observations_skipped": 0, "exceptions_json": "[]", "error_message": None}
+               "observations_skipped": 0, "exceptions_json": "[]", "error_message": None,
+               "attempt_count": 1, "connector_version": _connector_version(source["connector_format"], config_json),
+               "last_updated_at": core.now_utc(), "cancelled_at": None}
         columns = ",".join(job)
         db.execute(f"INSERT INTO ingestion_jobs({columns}) VALUES({','.join('?' for _ in job)})", tuple(job.values()))
         core._audit(db, role, "INGESTION_JOB_QUEUED", "ingestion_job", job["id"], after={**job, "exceptions_json": []},
@@ -240,6 +251,54 @@ def create_job(db_path: Path, source_id: str, mode_override: Any, role: str,
         result = dict(job); result["source_title"] = source["title"]; result["exceptions"] = []
         result.pop("exceptions_json")
     return result
+
+
+def retry_job(db_path: Path, job_id: str, role: str) -> dict[str, Any]:
+    with core._conn(db_path) as db:
+        row = db.execute("SELECT j.*,s.approval_status,s.permitted_use,s.connector_format,s.connector_config_json,"
+                         "s.ingestion_config_status FROM ingestion_jobs j JOIN sources s ON s.id=j.source_id WHERE j.id=?",
+                         (job_id,)).fetchone()
+        if row is None:
+            raise core.FIPError("ingestion job was not found.")
+        job = dict(row)
+        if job["status"] != "FAILED" or job["cancelled_at"]:
+            raise core.FIPError("Only failed, non-cancelled ingestion jobs can be retried.")
+        if job["mode"] != "MANUAL":
+            if job["approval_status"] != "APPROVED" or job["permitted_use"] != "public_display":
+                raise core.FIPError("Retry requires an approved public-display source.")
+            if job["ingestion_config_status"] != "APPROVED" or job["connector_format"] == "manual_only":
+                raise core.FIPError("Retry requires a reviewer-approved CSV or JSON connector.")
+        before = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+        now = core.now_utc()
+        version = _connector_version(job["connector_format"], job["connector_config_json"])
+        db.execute("UPDATE ingestion_jobs SET status='QUEUED',attempt_count=attempt_count+1,connector_version=?,"
+                   "started_at=NULL,completed_at=NULL,last_updated_at=?,cancelled_at=NULL,exceptions_json='[]',"
+                   "error_message=NULL WHERE id=?", (version, now, job_id))
+        after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+        core._audit(db, role, "INGESTION_JOB_RETRY_QUEUED", "ingestion_job", job_id,
+                    before=before, after=after,
+                    reason=f"Attempt {after['attempt_count']} queued with connector {version}; prior observation idempotency is retained.")
+        result = _job_record(after)
+    return result
+
+
+def cancel_job(db_path: Path, job_id: str, role: str, reason: str) -> dict[str, Any]:
+    with core._conn(db_path) as db:
+        row = db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone()
+        if row is None:
+            raise core.FIPError("ingestion job was not found.")
+        if row["status"] != "QUEUED" or row["cancelled_at"]:
+            raise core.FIPError("Only queued ingestion jobs can be cancelled.")
+        before = dict(row)
+        now = core.now_utc()
+        # Keep the original SQLite status constraint compatible; the public job
+        # representation reports CANCELLED from the durable cancellation stamp.
+        db.execute("UPDATE ingestion_jobs SET status='FAILED',cancelled_at=?,completed_at=?,last_updated_at=?,error_message=? WHERE id=?",
+                   (now, now, now, "Cancelled by administrator.", job_id))
+        after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+        core._audit(db, role, "INGESTION_JOB_CANCELLED", "ingestion_job", job_id,
+                    before=before, after=after, reason=reason)
+    return _job_record(after)
 
 
 def _public_host(url: str) -> tuple[str, int, list[str]]:
@@ -428,9 +487,10 @@ def _finish_job(db_path: Path, job_id: str, *, status: str, records_seen: int = 
         if row is None:
             raise core.FIPError("ingestion job was not found.")
         before = dict(row)
-        db.execute("UPDATE ingestion_jobs SET status=?,completed_at=?,records_seen=?,observations_created=?,"
+        finished_at = core.now_utc()
+        db.execute("UPDATE ingestion_jobs SET status=?,completed_at=?,last_updated_at=?,records_seen=?,observations_created=?,"
                    "observations_skipped=?,exceptions_json=?,error_message=? WHERE id=?",
-                   (status, core.now_utc(), records_seen, created, skipped, core._json(exceptions or []), error, job_id))
+                   (status, finished_at, finished_at, records_seen, created, skipped, core._json(exceptions or []), error, job_id))
         after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
         core._audit(db, role, "INGESTION_JOB_FINISHED", "ingestion_job", job_id, before=before, after=after,
                     reason=error or f"Job finished with status {status}; {created} observations created, {skipped} idempotent rows skipped.")
@@ -455,8 +515,20 @@ def run_job(db_path: Path, job_id: str, role: str = "admin") -> dict[str, Any]:
             raise core.FIPError("A reviewer must approve this source's connector configuration before retrieval.")
         if job["connector_format"] == "manual_only":
             raise core.FIPError("The source has no CSV or JSON connector configured.")
+        current_version = _connector_version(job["connector_format"], job["connector_config_json"])
+        if job["connector_version"] != current_version:
+            error = "The approved source connector changed after this job was queued. Retry the failed job after reviewing the new connector configuration."
+            finished_at = core.now_utc()
+            before = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+            db.execute("UPDATE ingestion_jobs SET status='FAILED',error_message=?,completed_at=?,last_updated_at=? WHERE id=?",
+                       (error, finished_at, finished_at, job_id))
+            after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
+            core._audit(db, role, "INGESTION_JOB_FAILED", "ingestion_job", job_id, before=before, after=after, reason=error)
+            return _job_record(after)
         before = {key: job[key] for key in ("status", "mode", "started_at")}
-        db.execute("UPDATE ingestion_jobs SET status='RUNNING',started_at=? WHERE id=?", (core.now_utc(), job_id))
+        started_at = core.now_utc()
+        db.execute("UPDATE ingestion_jobs SET status='RUNNING',started_at=?,last_updated_at=? WHERE id=?",
+                   (started_at, started_at, job_id))
         core._audit(db, role, "INGESTION_JOB_STARTED", "ingestion_job", job_id, before=before,
                     after={"status": "RUNNING", "mode": job["mode"]}, reason=f"{job['mode']} connector run started.")
 
@@ -517,8 +589,9 @@ def add_manual_observation(db_path: Path, job_id: str, payload: dict[str, Any], 
     with core._conn(db_path) as db:
         row = db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone()
         before = dict(row)
+        updated_at = core.now_utc()
         db.execute("UPDATE ingestion_jobs SET status='AWAITING_REVIEW',observations_created=observations_created+1,"
-                   "records_seen=records_seen+1,completed_at=? WHERE id=?", (core.now_utc(), job_id))
+                   "records_seen=records_seen+1,completed_at=?,last_updated_at=? WHERE id=?", (updated_at, updated_at, job_id))
         after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
         core._audit(db, role, "INGESTION_MANUAL_RECORD_ADDED", "ingestion_job", job_id,
                     before=before, after=after, reason=f"Manual observation {observation['id']} entered; reviewer validation and publication are still required.")
@@ -558,8 +631,8 @@ def correct_hybrid_exception(db_path: Path, job_id: str, row_number: int,
                 item.update(status="RESOLVED", resolved_at=core.now_utc(), correction_observation_id=observation["id"])
                 break
         before = dict(current)
-        db.execute("UPDATE ingestion_jobs SET exceptions_json=?,observations_created=observations_created+1 WHERE id=?",
-                   (core._json(current_exceptions), job_id))
+        db.execute("UPDATE ingestion_jobs SET exceptions_json=?,observations_created=observations_created+1,last_updated_at=? WHERE id=?",
+                   (core._json(current_exceptions), core.now_utc(), job_id))
         after = dict(db.execute("SELECT * FROM ingestion_jobs WHERE id=?", (job_id,)).fetchone())
         core._audit(db, role, "INGESTION_HYBRID_EXCEPTION_CORRECTED", "ingestion_job", job_id,
                     before=before, after=after,
@@ -594,7 +667,10 @@ def _queue_due_sources(db_path: Path, now: datetime | None = None, limit: int = 
                    "mode_override": None, "status": "QUEUED", "trigger_type": "schedule",
                    "requested_by": "scheduler", "created_at": core.now_utc(), "started_at": None,
                    "completed_at": None, "records_seen": 0, "observations_created": 0,
-                   "observations_skipped": 0, "exceptions_json": "[]", "error_message": None}
+                   "observations_skipped": 0, "exceptions_json": "[]", "error_message": None,
+                   "attempt_count": 1,
+                   "connector_version": _connector_version(source["connector_format"], source["connector_config_json"]),
+                   "last_updated_at": core.now_utc(), "cancelled_at": None}
             db.execute(f"INSERT INTO ingestion_jobs({','.join(job)}) VALUES({','.join('?' for _ in job)})", tuple(job.values()))
             core._audit(db, "scheduler", "INGESTION_JOB_QUEUED", "ingestion_job", job["id"], after=job,
                         reason=f"Scheduled {mode} ingestion job queued for source {source['id']}.")

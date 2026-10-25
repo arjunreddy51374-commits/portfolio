@@ -14,7 +14,7 @@ python app.py
 
 Open `http://127.0.0.1:5050` for the portfolio or `http://127.0.0.1:5050/dashboard` for the analytics dashboard. Do not open a template directly: templates require Flask.
 
-The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is not deployed. The financial workspace is available at `/finance` in that branch.
+The FIP workspace is available at `/fip`, its user guide at `/fip/guide`, and the authorized-token staff workspace at `/fip/staff`.
 
 ## Model evaluation and API
 
@@ -31,11 +31,12 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 
 ## FIP Release 1 prototype
 
-- `GET /fip` opens the persistent financial-intelligence workspace. Its local SQLite database is created at `instance/fip.sqlite3` on the first data request and is excluded from version control.
+- `GET /fip` opens the public financial-intelligence view; staff controls are collapsed there and available at `/fip/staff`. Its local SQLite database is created at `instance/fip.sqlite3` on the first data request and is excluded from version control.
 - The ingestion default is persisted as `MANUAL`; global, per-source, and per-job choices accept exactly `MANUAL`, `AUTOMATIC`, or `HYBRID`. Saving a mode does not start a job. Per-source connector configuration must be approved by a reviewer after the source itself is approved for public display.
 - Automatic and Hybrid jobs fetch only configured HTTPS CSV or JSON connectors, with a 5 MiB / 10,000-row limit, public-host checks, and a stable idempotency key. Automatic metric resolution accepts canonical catalogue labels or verified source-scoped mappings. Extracted records receive structural validation and stay unpublished; reviewer validation/approval and release approval still govern public output. Hybrid jobs additionally allow corrections for row exceptions.
 - Per-source schedules are opt-in. Run `python -m fip.scheduler` as a worker on the same host and shared persistent volume as the web service; configure `FIP_SCHEDULER_POLL_SECONDS` to adjust polling (minimum five seconds). A remote worker with its own local SQLite file cannot share the website's jobs. A source must have an approved connector, an Automatic/Hybrid effective mode, and an interval before the worker queues it.
-- The audit log records the actor role, mode, job, extraction method, and observation lineage. FIP uses shared admin/reviewer tokens, so the current authentication model identifies the role but not an individual staff account.
+- Jobs expose queued, running, awaiting-review, completed, failed, and cancelled states. Failed jobs can be retried with the current reviewer-approved connector version; queued jobs can be cancelled with an audited reason.
+- The audit log records the actor role, mode, job, connector version, attempt, extraction method, and observation lineage. FIP uses shared admin/reviewer tokens, so the current authentication model identifies the role but not an individual staff account.
 - Configure independent admin and reviewer tokens before staff operations:
 
   ```bash
@@ -70,7 +71,7 @@ The isolated upgrade work is on branch `upgrade/premium-portfolio-phase1`; it is
 
 ## Testing
 
-Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, FIP identity/evidence/calculation/reconciliation/release workflows, Manual/Automatic/Hybrid ingestion, access control, connector approval, idempotency, hybrid corrections, schedules, CSV/Power BI/Excel delivery, API behavior, and explicit multimodal unavailability.
+Run `python -m pytest -q` from the project directory. The tests cover dataset dimensions/class counts, model training split, homepage compatibility, dashboard rendering, finance/healthcare calculations and validation, FIP identity/evidence/calculation/reconciliation/release workflows, Manual/Automatic/Hybrid ingestion, public/staff page separation, access control, connector approval/versioning, idempotency, hybrid corrections, schedules, retries, cancellation, CSV/Power BI/Excel delivery, API behavior, and explicit multimodal unavailability.
 
 ## Optional mammography training
 
