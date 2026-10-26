@@ -6,6 +6,7 @@
   <meta name="description" content="Source-attributed financial analysis workspace. Calculations are transparent, stateless, and require human review before publication.">
   <title>Financial Intelligence · Sunilkumar Vajjiram</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/finance.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/finance-workbench.css') }}">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to financial analysis</a>
@@ -19,10 +20,31 @@
       <h1>Numbers, with their<br><span>sources attached.</span></h1>
       <p>Explore standard financial statement metrics from figures you enter. Each result includes its formula, inputs, reporting period, units, and source reference.</p>
       <div class="hero-badges"><span>Decimal arithmetic</span><span>Source attributed</span><span>Not saved</span></div>
+      <div class="finance-hero-actions"><a class="button-primary" href="#finance-form">Analyse statements</a><button class="button-secondary load-sample" type="button">Explore a sample</button></div>
+    </section>
+
+    <section id="multi-year-analysis" class="finance-panel history-import">
+      <div class="panel-heading"><div><p class="eyebrow">MULTI-YEAR ANALYSIS & PEERS</p><h2>Import a statement history</h2></div><a class="button-secondary template-download" href="{{ url_for('static', filename='documents/finance-import-template.csv') }}" download>CSV template</a></div>
+      <p class="panel-intro">Upload rows with company, period, currency, unit, source URL and financial values. CSV and XLSX files are validated and analyzed in memory; they are not stored. Peer comparisons are withheld when currencies differ.</p>
+      <form id="history-import-form" class="history-import-form">
+        <label>Financial statements file<input id="history-file" name="file" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required></label>
+        <button class="button-primary" type="submit">Analyze imported periods</button>
+      </form>
+      <p id="history-import-error" class="model-error" role="alert" hidden></p>
+      <div id="history-results" class="history-results" hidden>
+        <div class="history-result-heading"><div><p class="eyebrow">VALIDATED IMPORT</p><h3>Historical analysis</h3></div><label id="history-company-select-label">Company<select id="history-company-select"></select></label></div>
+        <div id="history-warnings" class="history-warnings"></div>
+        <div id="history-kpis" class="history-kpis"></div>
+        <div class="sample-chart-wrap history-chart-wrap"><div class="sample-chart-heading"><strong>Revenue trend</strong><span id="history-chart-unit"></span></div><svg id="history-chart" class="sample-trend-chart" viewBox="0 0 640 230" role="img" aria-label="Revenue trend for imported reporting periods"></svg></div>
+        <div id="history-table" class="table-wrap model-table-wrap"></div>
+        <section id="peer-comparison" class="peer-comparison" hidden><h4>Latest-period peer comparison</h4><div id="peer-table" class="table-wrap model-table-wrap"></div></section>
+      </div>
+      <p class="privacy-note">Imported rows stay in this page session only. Every row must carry its own source URL; import does not verify or retrieve that source.</p>
     </section>
 
     <section class="finance-grid" aria-label="Financial analysis workspace">
       <form id="finance-form" class="finance-panel" novalidate>
+        <input type="hidden" name="source_kind" value="PUBLIC_SOURCE">
         <div class="panel-heading"><div><p class="eyebrow">01 / SOURCE & INPUTS</p><h2>Enter statement values</h2></div><span class="status-pill">Draft · unreviewed</span></div>
         <p class="panel-intro">Manually transcribe figures from an original company filing or other verifiable source. This tool does not retrieve or validate the source document.</p>
         <fieldset class="finance-fieldset"><legend>Source context</legend>
@@ -30,29 +52,90 @@
           <div class="field-pair"><label>Reporting period<input name="period" placeholder="FY2025 or 2025-Q1" required></label><label>Publication date <span>(if known)</span><input name="publication_date" type="date"></label></div>
           <div class="field-pair"><label>Currency code<input name="currency" value="INR" maxlength="3" pattern="[A-Z]{3}" required></label><label>Source figures are in<select name="unit" required><option value="ones">Ones</option><option value="thousands">Thousands</option><option value="millions" selected>Millions</option><option value="billions">Billions</option></select></label></div>
         </fieldset>
-        <fieldset class="finance-fieldset"><legend>Income statement</legend><p>Enter amounts using the selected currency and unit. Negative profit values are allowed.</p>
+        <fieldset class="finance-fieldset"><legend>Income statement</legend><p>Enter amounts using the selected currency and unit. Negative profit values are allowed; revenue must be non-negative.</p>
           <div class="field-pair"><label>Revenue<input name="revenue" type="number" step="any" inputmode="decimal"></label><label>Prior-period revenue<input name="prior_revenue" type="number" step="any" inputmode="decimal"></label></div>
           <label>Prior revenue reporting period <span>(required when prior-period revenue is supplied)</span><input name="prior_period" placeholder="FY2024 or 2024-Q1"></label>
           <div class="field-pair"><label>Gross profit<input name="gross_profit" type="number" step="any" inputmode="decimal"></label><label>Operating profit<input name="operating_profit" type="number" step="any" inputmode="decimal"></label></div>
           <label>Net income / profit after tax<input name="net_income" type="number" step="any" inputmode="decimal"></label>
+          <div class="field-pair"><label>Cost of revenue <span>(optional; positive expense)</span><input name="cost_of_revenue" type="number" min="0" step="any" inputmode="decimal"></label><label>Depreciation / amortisation<input name="depreciation" type="number" min="0" step="any" inputmode="decimal"></label></div>
+          <div class="field-pair"><label>Interest expense<input name="interest_expense" type="number" min="0" step="any" inputmode="decimal"></label><label>Tax expense<input name="tax_expense" type="number" step="any" inputmode="decimal"></label></div>
         </fieldset>
-        <fieldset class="finance-fieldset"><legend>Balance sheet</legend><div class="field-pair"><label>Current assets<input name="current_assets" type="number" step="any" inputmode="decimal"></label><label>Current liabilities<input name="current_liabilities" type="number" step="any" inputmode="decimal"></label></div>
+        <fieldset class="finance-fieldset"><legend>Balance sheet</legend><div class="field-pair"><label>Current assets<input name="current_assets" type="number" min="0" step="any" inputmode="decimal"></label><label>Current liabilities<input name="current_liabilities" type="number" min="0" step="any" inputmode="decimal"></label></div>
           <div class="field-pair"><label>Inventory<input name="inventory" type="number" step="any" inputmode="decimal"></label><label>Total debt<input name="total_debt" type="number" step="any" inputmode="decimal"></label></div>
           <label>Total equity<input name="total_equity" type="number" step="any" inputmode="decimal"></label>
+          <div class="field-pair"><label>Cash and cash equivalents<input name="cash_and_equivalents" type="number" min="0" step="any" inputmode="decimal"></label><label>Non-current assets<input name="noncurrent_assets" type="number" min="0" step="any" inputmode="decimal"></label></div>
+          <label>Other liabilities <span>(excluding current liabilities and debt)</span><input name="other_liabilities" type="number" min="0" step="any" inputmode="decimal"></label>
+          <div class="field-pair"><label>Average total assets <span>(optional; for ROA / asset turnover)</span><input name="average_total_assets" type="number" step="any" inputmode="decimal"></label><label>Average total equity <span>(optional; for ROE)</span><input name="average_total_equity" type="number" step="any" inputmode="decimal"></label></div>
+          <div class="field-pair"><label>Average inventory <span>(optional; for turnover / days)</span><input name="average_inventory" type="number" step="any" inputmode="decimal"></label><label>Average receivables <span>(optional; for receivable days)</span><input name="average_receivables" type="number" step="any" inputmode="decimal"></label></div>
+          <label>Average payables <span>(optional; for payable days)</span><input name="average_payables" type="number" step="any" inputmode="decimal"></label>
         </fieldset>
         <fieldset class="finance-fieldset"><legend>Cash-flow statement</legend><div class="field-pair"><label>Operating cash flow<input name="operating_cash_flow" type="number" step="any" inputmode="decimal"></label><label>Investing cash flow<input name="investing_cash_flow" type="number" step="any" inputmode="decimal"></label></div>
-          <label>Financing cash flow<input name="financing_cash_flow" type="number" step="any" inputmode="decimal"></label>
+          <div class="field-pair"><label>Financing cash flow<input name="financing_cash_flow" type="number" step="any" inputmode="decimal"></label><label>Capital expenditure <span>(positive outflow; optional for free cash flow)</span><input name="capital_expenditure" type="number" min="0" step="any" inputmode="decimal"></label></div>
         </fieldset>
         <div class="form-actions"><button class="button-primary" type="submit"><span class="button-text">Calculate metrics</span><span class="spinner" aria-hidden="true"></span></button><button class="button-secondary" type="reset">Clear form</button></div>
         <p class="privacy-note">Values are processed for this request only. This prototype does not save your inputs. Do not enter confidential or personally identifiable information.</p>
       </form>
 
       <section class="results-column" aria-label="Calculation output">
-        <div id="finance-empty" class="finance-panel empty-state"><span class="empty-mark">Σ</span><p class="eyebrow">AWAITING INPUT</p><h2>Analysis appears here</h2><p>Enter a source URL, reporting period, currency, unit, and the figures you want to analyze. Metrics with incomplete inputs will be marked unavailable rather than guessed.</p></div>
+        <div id="finance-empty" class="finance-panel empty-state"><span class="empty-mark">Σ</span><p class="eyebrow">START WITH A CASE STUDY</p><h2>See the analysis workflow</h2><p>Explore the clearly labelled fictional example below, or enter your own figures. Incomplete metrics remain unavailable rather than guessed.</p>
+          <article class="sample-case" aria-labelledby="sample-case-title">
+            <div class="sample-case-heading"><div><p class="eyebrow">ILLUSTRATIVE BUSINESS CASE</p><h3 id="sample-case-title">Meridian Consumer Products</h3></div><span class="sample-label">Fictional · synthetic figures</span></div>
+            <p class="sample-case-copy">A made-up company example for demonstrating source-aware financial analysis. These values do not describe a real business and have no filing or external source.</p>
+            <div class="sample-kpis" aria-label="Illustrative key performance indicators">
+              <div><small>FY2025 revenue</small><strong>₹1,000m</strong></div>
+              <div><small>Revenue growth</small><strong>14.9%</strong></div>
+              <div><small>Operating margin</small><strong>15.0%</strong></div>
+            </div>
+            <div class="sample-chart-wrap"><div class="sample-chart-heading"><strong>Three-year revenue trend</strong><span>₹ millions · illustrative</span></div>
+              <svg class="sample-trend-chart" viewBox="0 0 400 178" role="img" aria-labelledby="sample-chart-title sample-chart-desc">
+                <title id="sample-chart-title">Illustrative revenue trend for Meridian Consumer Products</title>
+                <desc id="sample-chart-desc">Synthetic revenue rises from 720 million rupees in FY2023 to 870 million in FY2024 and 1,000 million in FY2025.</desc>
+                <path class="chart-gridline" d="M38 36H380M38 78H380M38 120H380M38 146H380"/>
+                <path class="chart-trend" d="M70 111L208 78L346 48"/>
+                <circle class="chart-point" cx="70" cy="111" r="5"/><circle class="chart-point" cx="208" cy="78" r="5"/><circle class="chart-point" cx="346" cy="48" r="5"/>
+                <text class="chart-value" x="70" y="96" text-anchor="middle">₹720m</text><text class="chart-value" x="208" y="63" text-anchor="middle">₹870m</text><text class="chart-value" x="346" y="33" text-anchor="middle">₹1,000m</text>
+                <text class="chart-period" x="70" y="168" text-anchor="middle">FY2023</text><text class="chart-period" x="208" y="168" text-anchor="middle">FY2024</text><text class="chart-period" x="346" y="168" text-anchor="middle">FY2025</text>
+              </svg>
+            </div>
+            <button class="button-primary load-sample" type="button">Calculate this sample</button>
+            <p class="sample-footnote">Illustration only. Not a reported company result, investment opinion, or source-verified analysis.</p>
+          </article>
+        </div>
         <div id="finance-results" hidden>
-          <section class="finance-panel result-source"><p class="eyebrow">INPUT PROVENANCE</p><div id="source-summary"></div><p class="unreviewed-warning"><strong>Not reviewed.</strong> This calculator has not independently checked the source or the values. Verify figures, definitions, period, and accounting classification before using or publishing results.</p></section>
-          <section class="finance-panel"><div class="panel-heading"><div><p class="eyebrow">02 / CALCULATED RESULTS</p><h2>Analysis summary</h2></div><span class="result-units" id="result-units"></span></div><div id="metrics-output" class="metrics-output"></div></section>
+          <section class="finance-panel result-source"><p class="eyebrow">INPUT PROVENANCE</p><div id="source-summary"></div><p id="analysis-review-warning" class="unreviewed-warning"><strong>Not reviewed.</strong> This calculator has not independently checked the source or the values. Verify figures, definitions, period, and accounting classification before using or publishing results.</p></section>
+          <section class="finance-panel"><div class="panel-heading"><div><p class="eyebrow">02 / CALCULATED RESULTS</p><h2>Analysis summary</h2></div><span class="result-units" id="result-units"></span></div><div id="metrics-output" class="metrics-output"></div><details class="metric-state-details"><summary>Metric availability and unavailable inputs</summary><ul id="metric-states-output" class="metric-state-list"></ul></details></section>
           <section class="finance-panel"><p class="eyebrow">03 / DATA QUALITY & LIMITS</p><h2>Read with context</h2><ul id="limitations-output" class="limitations-list"></ul></section>
+          <section class="finance-panel model-studio" id="model-studio"><div class="panel-heading"><div><p class="eyebrow">04 / FINANCIAL MODELLING STUDIO</p><h2>Test operating scenarios</h2></div><span id="model-version" class="status-pill">Model not run</span></div>
+            <p id="model-input-status" class="panel-intro">Calculate a complete, source-linked annual statement to prepare starting assumptions.</p>
+            <form id="model-assumptions-form" class="model-assumptions" hidden>
+              <div class="model-assumption-grid">
+                <label>Forecast years<input name="forecast_years" type="number" min="1" max="10" step="1" value="5" required></label>
+                <label>Revenue growth (%)<input name="revenue_growth_pct" type="number" step="any" required><small data-origin="revenue_growth_pct"></small></label>
+                <label>Gross margin (%)<input name="gross_margin_pct" type="number" step="any" required><small data-origin="gross_margin_pct"></small></label>
+                <label>Operating expense / revenue (%)<input name="operating_expense_pct" type="number" step="any" required><small data-origin="operating_expense_pct"></small></label>
+                <label>Tax rate (%)<input name="tax_rate_pct" type="number" min="0" max="100" step="any" required><small data-origin="tax_rate_pct"></small></label>
+                <label>Interest rate on debt (%)<input name="interest_rate_pct" type="number" min="0" max="100" step="any" required><small data-origin="interest_rate_pct"></small></label>
+                <label>Depreciation / revenue (%)<input name="depreciation_pct" type="number" min="0" max="100" step="any" required><small data-origin="depreciation_pct"></small></label>
+                <label>Capital expenditure / revenue (%)<input name="capex_pct" type="number" min="0" max="200" step="any" required><small data-origin="capex_pct"></small></label>
+                <label>Non-cash current assets / revenue (%)<input name="noncash_current_assets_pct" type="number" min="0" max="500" step="any" required><small data-origin="noncash_current_assets_pct"></small></label>
+                <label>Current liabilities / revenue (%)<input name="current_liabilities_pct" type="number" min="0" max="500" step="any" required><small data-origin="current_liabilities_pct"></small></label>
+                <label>Inventory / revenue (%)<input name="inventory_pct" type="number" min="0" max="500" step="any" required><small data-origin="inventory_pct"></small></label>
+                <label>Dividend payout (%)<input name="dividend_payout_pct" type="number" min="0" max="100" step="any" required><small data-origin="dividend_payout_pct"></small></label>
+                <label>Annual debt change (<span id="model-debt-unit">source unit</span>)<input name="annual_debt_change" type="number" step="any" required><small data-origin="annual_debt_change"></small></label>
+                <label>Upside growth difference (pp)<input name="upside_growth_delta_pct" type="number" min="0" max="100" step="any" required><small data-origin="upside_growth_delta_pct"></small></label>
+                <label>Downside growth difference (pp)<input name="downside_growth_delta_pct" type="number" min="0" max="100" step="any" required><small data-origin="downside_growth_delta_pct"></small></label>
+                <label>Operating margin scenario shift (pp)<input name="operating_margin_delta_pp" type="number" min="0" max="100" step="any" required><small data-origin="operating_margin_delta_pp"></small></label>
+              </div>
+              <p class="model-origin-note">Values with a source-derived starting point are shown with their origin. Other values are explicit editable assumptions.</p>
+              <button id="run-model" class="button-primary" type="button" disabled>Generate three scenarios</button>
+              <p id="model-error" class="model-error" role="alert" hidden></p>
+            </form>
+            <div id="model-results" class="model-results" hidden>
+              <div id="scenario-summary" class="scenario-summary" aria-label="Scenario comparison"></div>
+              <div id="scenario-details" class="scenario-details"></div>
+            </div>
+            <p class="model-limitations">Illustrative scenario analysis, not a prediction or investment recommendation. The opening balance sheet must reconcile; projections remain unreviewed and are not publishable as reported facts.</p>
+          </section>
         </div>
         <section class="finance-panel methodology"><p class="eyebrow">METHODOLOGY</p><h2>What these calculations do—and do not—say</h2><details><summary>Formula and interpretation notes</summary><ul>
           <li><strong>Growth:</strong> (current revenue − prior revenue) ÷ prior revenue. Not defined when prior revenue is zero or negative; period definitions must match.</li>

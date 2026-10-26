@@ -175,6 +175,64 @@ def test_finance_api_rejects_invalid_source_and_content_type(client):
     assert "HTTPS" in response.json["error"]
 
 
+def test_finance_phase2_history_model_and_csv_import_apis(client):
+    def period(year, revenue):
+        return {
+            "currency": "INR", "unit": "millions", "period": f"FY{year}",
+            "source_url": f"https://example.com/{year}.pdf",
+            "amounts": {
+                "revenue": str(revenue), "gross_profit": str(revenue * 42 // 100),
+                "operating_profit": str(revenue * 15 // 100), "net_income": str(revenue * 92 // 1000),
+                "current_assets": str(revenue * 60 // 100), "current_liabilities": str(revenue * 30 // 100),
+                "inventory": str(revenue * 12 // 100), "total_debt": str(revenue * 24 // 100),
+                "total_equity": str(revenue * 40 // 100), "cash_and_equivalents": str(revenue * 10 // 100),
+                "noncurrent_assets": str(revenue * 50 // 100), "other_liabilities": str(revenue * 16 // 100),
+            },
+        }
+
+    latest = period(2025, 1000)
+    analysis = client.post("/api/finance/analyze", json=latest)
+    assert analysis.status_code == 200
+    assert analysis.json["model_defaults"]["model_version"]
+
+    history = client.post("/api/finance/history", json={
+        "company_name": "Example Ltd", "periods": [period(2024, 900), latest],
+    })
+    assert history.status_code == 200
+    assert history.json["periods"][-1]["metadata"]["period"] == "FY2025"
+    assert history.json["revenue_cagr"] is not None
+
+    model_response = client.post("/api/finance/model", json={
+        "statement": latest,
+        "assumptions": analysis.json["model_defaults"]["values"],
+        "forecast_years": 2,
+    })
+    assert model_response.status_code == 200
+    assert model_response.json["scenarios"]["base"][0]["period"] == "FY2026"
+    assert model_response.json["scenarios"]["base"][0]["balance_sheet"]["balance_status"] == "PASS"
+
+    csv_body = (
+        "company_name,period,currency,unit,source_url,revenue\n"
+        "Example Ltd,FY2024,INR,millions,https://example.com/2024.pdf,900\n"
+        "Example Ltd,FY2025,INR,millions,https://example.com/2025.pdf,1000\n"
+    )
+    imported = client.post("/api/finance/import", data={
+        "file": (BytesIO(csv_body.encode()), "history.csv"),
+    }, content_type="multipart/form-data")
+    assert imported.status_code == 200
+    assert imported.json["stored"] is False
+    assert imported.json["row_count"] == 2
+
+
+def test_finance_phase2_apis_reject_malformed_requests(client):
+    assert client.post("/api/finance/history", json={"company_name": "Example", "periods": []}).status_code == 400
+    response = client.post("/api/finance/import", data={
+        "file": (BytesIO(b"not a statement"), "history.txt"),
+    }, content_type="multipart/form-data")
+    assert response.status_code == 400
+    assert "Only .csv and .xlsx" in response.json["error"]
+
+
 def test_healthcare_dashboard_and_aggregate_kpi_api(client):
     page = client.get("/health-analytics")
     assert page.status_code == 200

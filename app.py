@@ -12,6 +12,9 @@ from PIL import Image, UnidentifiedImageError
 from werkzeug.exceptions import RequestEntityTooLarge
 
 from finance.calculations import FinancialInputError, analyze_financials
+from finance.history import analyze_history
+from finance.importing import MAX_UPLOAD_BYTES, analyze_statement_upload
+from finance.modeling import build_scenarios, default_assumptions
 from healthcare.metrics import HealthMetricInputError, analyze_health_kpis
 from fip.routes import create_blueprint as create_fip_blueprint
 from ml.model_service import (
@@ -159,16 +162,56 @@ def finance_dashboard():
 
 @app.post("/api/finance/analyze")
 def finance_analyze():
-    if not request.is_json:
-        return jsonify(error="Content-Type must be application/json."), 415
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        return jsonify(error="Request body must be a JSON object."), 400
+    payload, error = json_payload()
+    if error:
+        return error
     try:
         result = analyze_financials(payload)
+        try:
+            result["model_defaults"] = default_assumptions(payload)
+            result["model_defaults_error"] = None
+        except FinancialInputError as model_error:
+            result["model_defaults"] = None
+            result["model_defaults_error"] = str(model_error)
     except FinancialInputError as error:
         return jsonify(error=str(error)), 400
     return jsonify(result)
+
+
+@app.post("/api/finance/history")
+def finance_history():
+    payload, error = json_payload()
+    if error:
+        return error
+    try:
+        return jsonify(analyze_history(payload))
+    except FinancialInputError as error:
+        return jsonify(error=str(error)), 400
+
+
+@app.post("/api/finance/import")
+def finance_import():
+    if request.content_length and request.content_length > MAX_UPLOAD_BYTES + 64 * 1024:
+        return jsonify(error="Import files are limited to 5 MiB."), 413
+    uploaded = request.files.get("file")
+    if uploaded is None:
+        return jsonify(error="Choose a CSV or XLSX file."), 400
+    content = uploaded.stream.read(MAX_UPLOAD_BYTES + 1)
+    try:
+        return jsonify(analyze_statement_upload(uploaded.filename or "", content))
+    except FinancialInputError as error:
+        return jsonify(error=str(error)), 400
+
+
+@app.post("/api/finance/model")
+def finance_model():
+    payload, error = json_payload()
+    if error:
+        return error
+    try:
+        return jsonify(build_scenarios(payload))
+    except FinancialInputError as error:
+        return jsonify(error=str(error)), 400
 
 
 @app.get("/health-analytics")
